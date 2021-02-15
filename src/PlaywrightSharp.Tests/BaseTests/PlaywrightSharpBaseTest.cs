@@ -2,10 +2,12 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using PlaywrightSharp;
 using PlaywrightSharp.Tests.Helpers;
 using PlaywrightSharp.TestServer;
 using PlaywrightSharp.Transport.Channels;
+using PlaywrightSharp.Xunit;
 using Xunit.Abstractions;
 
 namespace PlaywrightSharp.Tests.BaseTests
@@ -16,6 +18,7 @@ namespace PlaywrightSharp.Tests.BaseTests
     public class PlaywrightSharpBaseTest : IDisposable
     {
         private readonly XunitLoggerProvider _loggerProvider;
+        private readonly ILogger<SimpleServer> _httpLogger;
 
         internal IPlaywright Playwright => PlaywrightSharpBrowserLoaderFixture.Playwright;
         internal string BaseDirectory { get; set; }
@@ -37,10 +40,17 @@ namespace PlaywrightSharp.Tests.BaseTests
             Initialize();
 
             _loggerProvider = new XunitLoggerProvider(output);
+            _httpLogger = TestConstants.LoggerFactory.CreateLogger<SimpleServer>();
             TestConstants.LoggerFactory.AddProvider(_loggerProvider);
+            Server.RequestReceived += Server_RequestReceived;
+            HttpsServer.RequestReceived += Server_RequestReceived;
 
             output.WriteLine($"Running {GetDisplayName(output)}");
-            output.WriteLine($"Using Browser: {((ChannelBase)((IChannelOwner<PlaywrightSharp.Browser>)PlaywrightSharpBrowserLoaderFixture.Browser).Channel).Guid}");
+        }
+
+        private void Server_RequestReceived(object sender, RequestReceivedEventArgs e)
+        {
+            _httpLogger.LogInformation($"Incoming request: {e.Request.Path}");
         }
 
         private static string GetDisplayName(ITestOutputHelper output)
@@ -66,6 +76,8 @@ namespace PlaywrightSharp.Tests.BaseTests
         /// <inheritdoc/>
         public virtual void Dispose()
         {
+            Server.RequestReceived -= Server_RequestReceived;
+            HttpsServer.RequestReceived -= Server_RequestReceived;
             _loggerProvider.Dispose();
         }
     }

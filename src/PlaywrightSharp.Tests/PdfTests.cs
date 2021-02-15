@@ -3,12 +3,13 @@ using System.IO;
 using System.Threading.Tasks;
 using PlaywrightSharp.Tests.Attributes;
 using PlaywrightSharp.Tests.BaseTests;
+using PlaywrightSharp.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace PlaywrightSharp.Tests
 {
-    ///<playwright-file>pdf.spec.js</playwright-file>
+    ///<playwright-file>pdf.spec.ts</playwright-file>
     [Collection(TestConstants.TestFixtureBrowserCollectionName)]
     public class PdfTests : PlaywrightSharpPageBaseTest
     {
@@ -17,8 +18,7 @@ namespace PlaywrightSharp.Tests
         {
         }
 
-        ///<playwright-file>pdf.spec.js</playwright-file>
-        ///<playwright-it>should be able to save file</playwright-it>
+        [PlaywrightTest("pdf.spec.ts", "should be able to save file")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldBeAbleToSaveFile()
         {
@@ -37,8 +37,7 @@ namespace PlaywrightSharp.Tests
             }
         }
 
-        ///<playwright-file>pdf.spec.js</playwright-file>
-        ///<playwright-it>should only have pdf in chromium</playwright-it>
+        [PlaywrightTest("pdf.spec.ts", "should only have pdf in chromium")]
         [SkipBrowserAndPlatformFact(skipChromium: true)]
         public Task ShouldOnlyHavePdfInChromium()
             => Assert.ThrowsAsync<NotSupportedException>(() => Page.GetPdfAsync());

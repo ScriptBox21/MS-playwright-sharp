@@ -8,7 +8,7 @@ namespace PlaywrightSharp
     /// <summary>
     /// Options for <seealso cref="IBrowserType.LaunchPersistentContextAsync(string, LaunchPersistentOptions)"/>.
     /// </summary>
-    public class LaunchPersistentOptions : LaunchOptions
+    public class LaunchPersistentOptions : LaunchOptionsBase
     {
         /// <summary>
         /// Sets a consistent viewport for each page. Defaults to an 800x600 viewport. null disables the default viewport.
@@ -88,19 +88,20 @@ namespace PlaywrightSharp
         /// <summary>
         /// An object containing additional HTTP headers to be sent with every request.
         /// </summary>
-        public Dictionary<string, string> ExtraHttpHeaders { get; set; }
+        public Dictionary<string, string> ExtraHTTPHeaders { get; set; }
 
         /// <summary>
-        /// Enables video recording for all pages to videosPath folder. If not specified, videos are not recorded.
+        /// Enables HAR recording for all pages into recordHar.path file. If not specified, the HAR is not recorded.
+        /// Make sure to await <see cref="IPage.CloseAsync(bool)"/> for the HAR to be saved.
+        /// You can use <see cref="Har.HarResult"/> to deserialize the generated JSON file.
         /// </summary>
-        public string VideosPath { get; set; }
+        public RecordHarOptions RecordHar { get; set; }
 
         /// <summary>
-        /// Specifies dimensions of the automatically recorded video. Can only be used if <see cref="VideosPath"/> is set.
-        /// If not specified the size will be equal to viewport. If viewport is not configured explicitly the video size defaults to 1280x720.
-        /// Actual picture of the page will be scaled down if necessary to fit specified size.
+        /// Enables video recording for all pages into recordVideo.dir directory. If not specified videos are not recorded.
+        /// Make sure to await <seealso cref="BrowserContext.CloseAsync"/> for videos to be saved.
         /// </summary>
-        public ViewportSize VideoSize { get; set; }
+        public RecordVideoOptions RecordVideo { get; set; }
 
         /// <summary>
         /// Adds all the values set int <paramref name="right"/> into <paramref name="left"/>.
@@ -131,9 +132,9 @@ namespace PlaywrightSharp
             left.AcceptDownloads = right.AcceptDownloads ?? left.AcceptDownloads;
             left.ColorScheme = right.ColorScheme ?? left.ColorScheme;
             left.Locale = right.Locale ?? left.Locale;
-            left.ExtraHttpHeaders = right.ExtraHttpHeaders ?? left.ExtraHttpHeaders;
-            left.VideosPath = right.VideosPath ?? left.VideosPath;
-            left.VideoSize = right.VideoSize ?? left.VideoSize;
+            left.ExtraHTTPHeaders = right.ExtraHTTPHeaders ?? left.ExtraHTTPHeaders;
+            left.RecordHar = right.RecordHar ?? left.RecordHar;
+            left.RecordVideo = right.RecordVideo ?? left.RecordVideo;
 
             return left;
         }
@@ -246,19 +247,19 @@ namespace PlaywrightSharp
                 args["locale"] = Locale;
             }
 
-            if (ExtraHttpHeaders != null)
+            if (ExtraHTTPHeaders != null)
             {
-                args["extraHTTPHeaders"] = ExtraHttpHeaders.Select(kv => new HeaderEntry { Name = kv.Key, Value = kv.Value }).ToArray();
+                args["extraHTTPHeaders"] = ExtraHTTPHeaders.Select(kv => new HeaderEntry { Name = kv.Key, Value = kv.Value }).ToArray();
             }
 
-            if (VideosPath != null)
+            if (RecordHar != null)
             {
-                args["videosPath"] = VideosPath;
+                args["recordHar"] = RecordHar;
             }
 
-            if (VideoSize != null)
+            if (RecordVideo != null)
             {
-                args["videoSize"] = VideoSize;
+                args["recordVideo"] = RecordVideo;
             }
 
             return args;

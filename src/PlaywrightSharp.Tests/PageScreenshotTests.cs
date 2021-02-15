@@ -5,12 +5,14 @@ using System.Threading.Tasks;
 using PlaywrightSharp.Helpers;
 using PlaywrightSharp.Tests.Attributes;
 using PlaywrightSharp.Tests.BaseTests;
+using PlaywrightSharp.Tests.Helpers;
+using PlaywrightSharp.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace PlaywrightSharp.Tests
 {
-    ///<playwright-file>page-screenshot.spec.js</playwright-file>
+    ///<playwright-file>page-screenshot.spec.ts</playwright-file>
 
     [Collection(TestConstants.TestFixtureBrowserCollectionName)]
     public class PageScreenshotTests : PlaywrightSharpPageBaseTest
@@ -20,9 +22,8 @@ namespace PlaywrightSharp.Tests
         {
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should work</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should work")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWork()
         {
             await Page.SetViewportSizeAsync(new ViewportSize
@@ -35,9 +36,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-sanity.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should clip rect</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should clip rect")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldClipRect()
         {
             await Page.SetViewportSizeAsync(new ViewportSize
@@ -58,9 +58,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-clip-rect.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should clip rect with fullPage</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should clip rect with fullPage")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldClipRectWithFullPage()
         {
             await Page.SetViewportSizeAsync(new ViewportSize { Width = 500, Height = 500 });
@@ -78,9 +77,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-clip-rect.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should clip elements to the viewport</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should clip elements to the viewport")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldClipElementsToTheViewport()
         {
             await Page.SetViewportSizeAsync(new ViewportSize { Width = 500, Height = 500 });
@@ -96,9 +94,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-offscreen-clip.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should throw on clip outside the viewport</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should throw on clip outside the viewport")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldThrowOnClipOutsideTheViewport()
         {
             await Page.SetViewportSizeAsync(new ViewportSize { Width = 500, Height = 500 });
@@ -115,9 +112,8 @@ namespace PlaywrightSharp.Tests
             Assert.Contains("Clipped area is either empty or outside the resulting image", exception.Message);
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should run in parallel</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should run in parallel")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldRunInParallel()
         {
             await Page.SetViewportSizeAsync(new ViewportSize
@@ -144,9 +140,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("grid-cell-1.png", tasks[0].Result));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should take fullPage screenshots</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should take fullPage screenshots")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldTakeFullPageScreenshots()
         {
             await Page.SetViewportSizeAsync(new ViewportSize
@@ -159,9 +154,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-grid-fullpage.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should restore viewport after fullPage screenshot</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should restore viewport after fullPage screenshot")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldRestoreViewportAfterFullPageScreenshot()
         {
             await Page.SetViewportSizeAsync(new ViewportSize
@@ -176,9 +170,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(500, Page.ViewportSize.Height);
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should run in parallel in multiple pages</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should run in parallel in multiple pages")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldRunInParallelInMultiplePages()
         {
             int n = 5;
@@ -226,8 +219,7 @@ namespace PlaywrightSharp.Tests
             await TaskUtils.WhenAll(closeTasks);
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should allow transparency</playwright-it>
+        [PlaywrightTest("page-screenshot.spec.ts", "should allow transparency")]
         [SkipBrowserAndPlatformFact(skipFirefox: true)]
         public async Task ShouldAllowTransparency()
         {
@@ -242,9 +234,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("transparent.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should render white background on jpeg file</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should render white background on jpeg file")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldRenderWhiteBackgroundOnJpegFile()
         {
             await Page.SetViewportSizeAsync(new ViewportSize { Width = 100, Height = 100 });
@@ -255,9 +246,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("white.jpg", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should work with odd clip size on Retina displays</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should work with odd clip size on Retina displays")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithOddClipSizeOnRetinaDisplays()
         {
             byte[] screenshot = await Page.ScreenshotAsync(
@@ -272,8 +262,7 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-clip-odd-size.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should work with a mobile viewport</playwright-it>
+        [PlaywrightTest("page-screenshot.spec.ts", "should work with a mobile viewport")]
         [SkipBrowserAndPlatformFact(skipFirefox: true)]
         public async Task ShouldWorkWithAMobileViewport()
         {
@@ -293,8 +282,7 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-mobile.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should work with a mobile viewport and clip</playwright-it>
+        [PlaywrightTest("page-screenshot.spec.ts", "should work with a mobile viewport and clip")]
         [SkipBrowserAndPlatformFact(skipFirefox: true)]
         public async Task ShouldWorkWithAMobileViewportAndClip()
         {
@@ -321,8 +309,7 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-mobile-clip.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should work with a mobile viewport and fullPage</playwright-it>
+        [PlaywrightTest("page-screenshot.spec.ts", "should work with a mobile viewport and fullPage")]
         [SkipBrowserAndPlatformFact(skipFirefox: true)]
         public async Task ShouldWorkWithAMobileViewportAndFullPage()
         {
@@ -342,9 +329,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-mobile-fullpage.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should work for canvas</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should work for canvas")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkForCanvas()
         {
             await Page.SetViewportSizeAsync(new ViewportSize
@@ -358,8 +344,7 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-canvas.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should work for webgl</playwright-it>
+        [PlaywrightTest("page-screenshot.spec.ts", "should work for webgl")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldWorkForWebgl()
         {
@@ -374,9 +359,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-webgl.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should work for translateZ</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should work for translateZ")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkForTranslateZ()
         {
             await Page.SetViewportSizeAsync(new ViewportSize
@@ -390,9 +374,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-translateZ.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should work while navigating</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should work while navigating")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWhileNavigating()
         {
             await Page.SetViewportSizeAsync(new ViewportSize
@@ -414,9 +397,8 @@ namespace PlaywrightSharp.Tests
             }
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should work with device scale factor</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should work with device scale factor")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithDeviceScaleFactor()
         {
             await using var context = await Browser.NewContextAsync(new BrowserContextOptions
@@ -435,9 +417,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-device-scale-factor.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>should work with iframe in shadow</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "should work with iframe in shadow")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithiFrameInShadow()
         {
             await using var context = await Browser.NewContextAsync(new BrowserContextOptions
@@ -455,9 +436,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-iframe.png", screenshot));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>path option should work</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "path option should work")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task PathOptionShouldWork()
         {
             await Page.SetViewportSizeAsync(500, 500);
@@ -469,9 +449,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-sanity.png", outputPath));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>path option should create subdirectories</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "path option should create subdirectories")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task PathOptionShouldCreateSubdirectories()
         {
             await Page.SetViewportSizeAsync(500, 500);
@@ -483,9 +462,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-sanity.png", outputPath));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>path option should detect joeg</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "path option should detect joeg")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task PathOptionShouldDetectJpeg()
         {
             await Page.SetViewportSizeAsync(100, 100);
@@ -497,9 +475,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(ScreenshotHelper.PixelMatch("white.jpg", outputPath));
         }
 
-        ///<playwright-file>page-screenshot.spec.js</playwright-file>
-        ///<playwright-it>path option should throw for unsupported mime type</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-screenshot.spec.ts", "path option should throw for unsupported mime type")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task PathOptionShouldThrowForUnsupportedMimeType()
         {
             var exception = await Assert.ThrowsAnyAsync<ArgumentException>(() => Page.ScreenshotAsync("file.txt"));

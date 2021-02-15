@@ -5,14 +5,12 @@ using System.Threading.Tasks;
 using PlaywrightSharp.Chromium;
 using PlaywrightSharp.Tests.Attributes;
 using PlaywrightSharp.Tests.BaseTests;
+using PlaywrightSharp.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace PlaywrightSharp.Tests.Chromium
 {
-    ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-    ///<playwright-describe>OOPIF</playwright-describe>
-    [Trait("Category", "chromium")]
     [Collection(TestConstants.TestFixtureBrowserCollectionName)]
     public class OopifTests : PlaywrightSharpBaseTest, IAsyncLifetime
     {
@@ -24,9 +22,7 @@ namespace PlaywrightSharp.Tests.Chromium
         {
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should report oopif frames</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should report oopif frames")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldReportOopifFrames()
         {
@@ -36,9 +32,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.Equal(TestConstants.CrossProcessHttpPrefix + "/grid.html", await _page.Frames[1].EvaluateAsync<string>("() => '' + location.href"));
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should handle oopif detach</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should handle oopif detach")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldHandleOopifDetach()
         {
@@ -55,9 +49,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.Equal(frame, frameDetached.Frame);
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should handle remote -> local -> remote transitions</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should handle remote -> local -> remote transitions")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldHandleRemoteLocalRemoteTransitions()
         {
@@ -81,17 +73,13 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.Equal(1, await CountOOPIFsASync(_browser));
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should get the proper viewport</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should get the proper viewport")]
         [Fact(Skip = "Ignored in Playwright")]
         public void ShouldGetTheProperViewport()
         {
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should expose function</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should expose function")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldExposeFunction()
         {
@@ -109,9 +97,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.Equal(36, result);
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should emulate media</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should emulate media")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldEmulateMedia()
         {
@@ -125,9 +111,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.True(await oopif.EvaluateAsync<bool?>("() => matchMedia('(prefers-color-scheme: dark)').matches"));
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should emulate offline</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should emulate offline")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldEmulateOffline()
         {
@@ -141,9 +125,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.False(await oopif.EvaluateAsync<bool?>("() => navigator.onLine"));
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should support context options</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should support context options")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldSupportContextOptions()
         {
@@ -173,9 +155,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.Equal("UA", userAgent);
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should respect route</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should respect route")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldRespectRoute()
         {
@@ -193,9 +173,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.True(intercepted);
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should take screenshot</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should take screenshot")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldTakeScreenshot()
         {
@@ -206,9 +184,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.True(ScreenshotHelper.PixelMatch("screenshot-oopif.png", await _page.ScreenshotAsync()));
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should load oopif iframes with subresources and route</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should load oopif iframes with subresources and route")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldLoadOopififramesWithSubresourcesAndRoute()
         {
@@ -217,9 +193,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.Equal(1, await CountOOPIFsASync(_browser));
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should report main requests</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should report main requests")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldReportMainRequests()
         {
@@ -263,9 +237,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.Equal(grandChild, finishedFrames[2]);
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should support exposeFunction</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should support exposeFunction")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldSupportExposeFunction()
         {
@@ -281,9 +253,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.Equal(3, await _page.Frames[1].EvaluateAsync<int>("() => dec(4)"));
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should support addInitScript</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should support addInitScript")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldSupportAddInitScript()
         {
@@ -299,9 +269,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.Equal(17, await _page.Frames[1].EvaluateAsync<int>("() => window.bar"));
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should click a button when it overlays oopif</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should click a button when it overlays oopif")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldClickAButtonWhenItOverlaysOopif()
         {
@@ -311,9 +279,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.True(await _page.EvaluateAsync<bool?>("() => window.BUTTON_CLICKED"));
         }
 
-        ///<playwright-file>chromium/oopif.spec.js</playwright-file>
-        ///<playwright-describe>OOPIF</playwright-describe>
-        ///<playwright-it>should report google.com frame with headful</playwright-it>
+        [PlaywrightTest("chromium/oopif.spec.ts", "oopif", "should report google.com frame with headful")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldReportGoogleComFrameWithHeadful()
         {

@@ -29,8 +29,8 @@ namespace PlaywrightSharp.Chromium
             int? timeout,
             bool? dumpIO,
             int? slowMo,
-            bool? ignoreDefaultArgs,
-            string[] ignoredDefaultArgs,
+            bool? ignoreAllDefaultArgs,
+            string[] ignoreDefaultArgs,
             Dictionary<string, string> env,
             Dictionary<string, object> firefoxUserPrefs,
             ProxySettings proxy,
@@ -49,8 +49,8 @@ namespace PlaywrightSharp.Chromium
                 timeout,
                 dumpIO,
                 slowMo,
+                ignoreAllDefaultArgs,
                 ignoreDefaultArgs,
-                ignoredDefaultArgs,
                 env,
                 firefoxUserPrefs,
                 proxy,
@@ -61,7 +61,7 @@ namespace PlaywrightSharp.Chromium
 
         /// <inheritdoc/>
         public new async Task<IChromiumBrowserContext> LaunchPersistentContextAsync(string userDataDir, LaunchOptions options)
-            => await LaunchPersistentContextAsync(userDataDir, options).ConfigureAwait(false) as IChromiumBrowserContext;
+            => await base.LaunchPersistentContextAsync(userDataDir, options).ConfigureAwait(false) as IChromiumBrowserContext;
 
         /// <inheritdoc/>
         public new async Task<IChromiumBrowserContext> LaunchPersistentContextAsync(
@@ -76,10 +76,9 @@ namespace PlaywrightSharp.Chromium
             int? timeout = null,
             bool? dumpIO = null,
             int? slowMo = null,
-            bool? ignoreDefaultArgs = null,
-            string[] ignoredDefaultArgs = null,
+            bool? ignoreAllDefaultArgs = null,
+            string[] ignoreDefaultArgs = null,
             Dictionary<string, string> env = null,
-            Dictionary<string, object> firefoxUserPrefs = null,
             ProxySettings proxy = null,
             string userAgent = null,
             bool? bypassCSP = null,
@@ -95,14 +94,14 @@ namespace PlaywrightSharp.Chromium
             bool? acceptDownloads = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
+            Dictionary<string, string> extraHTTPHeaders = null,
             bool? chromiumSandbox = null,
             bool? handleSIGINT = null,
             bool? handleSIGTERM = null,
             bool? handleSIGHUP = null,
-            string videosPath = null,
-            ViewportSize videoSize = null)
-            => await LaunchPersistentContextAsync(
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null)
+            => await base.LaunchPersistentContextAsync(
                 userDataDir,
                 viewport,
                 headless,
@@ -114,10 +113,9 @@ namespace PlaywrightSharp.Chromium
                 timeout,
                 dumpIO,
                 slowMo,
+                ignoreAllDefaultArgs,
                 ignoreDefaultArgs,
-                ignoredDefaultArgs,
                 env,
-                firefoxUserPrefs,
                 proxy,
                 userAgent,
                 bypassCSP,
@@ -133,13 +131,13 @@ namespace PlaywrightSharp.Chromium
                 acceptDownloads,
                 colorScheme,
                 locale,
-                extraHttpHeaders,
+                extraHTTPHeaders,
                 chromiumSandbox,
                 handleSIGINT,
                 handleSIGTERM,
                 handleSIGHUP,
-                videosPath,
-                videoSize).ConfigureAwait(false) as IChromiumBrowserContext;
+                recordHar,
+                recordVideo).ConfigureAwait(false) as IChromiumBrowserContext;
 
         /// <inheritdoc/>
         public new async Task<IChromiumBrowserContext> LaunchPersistentContextAsync(
@@ -153,10 +151,9 @@ namespace PlaywrightSharp.Chromium
             int? timeout = null,
             bool? dumpIO = null,
             int? slowMo = null,
-            bool? ignoreDefaultArgs = null,
-            string[] ignoredDefaultArgs = null,
+            bool? ignoreAllDefaultArgs = null,
+            string[] ignoreDefaultArgs = null,
             Dictionary<string, string> env = null,
-            Dictionary<string, object> firefoxUserPrefs = null,
             ProxySettings proxy = null,
             string userAgent = null,
             bool? bypassCSP = null,
@@ -172,14 +169,14 @@ namespace PlaywrightSharp.Chromium
             bool? acceptDownloads = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
+            Dictionary<string, string> extraHTTPHeaders = null,
             bool? chromiumSandbox = null,
             bool? handleSIGINT = null,
             bool? handleSIGTERM = null,
             bool? handleSIGHUP = null,
-            string videosPath = null,
-            ViewportSize videoSize = null)
-            => await LaunchPersistentContextAsync(
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null)
+            => await base.LaunchPersistentContextAsync(
                 userDataDir,
                 headless,
                 args,
@@ -190,10 +187,9 @@ namespace PlaywrightSharp.Chromium
                 timeout,
                 dumpIO,
                 slowMo,
+                ignoreAllDefaultArgs,
                 ignoreDefaultArgs,
-                ignoredDefaultArgs,
                 env,
-                firefoxUserPrefs,
                 proxy,
                 userAgent,
                 bypassCSP,
@@ -209,13 +205,13 @@ namespace PlaywrightSharp.Chromium
                 acceptDownloads,
                 colorScheme,
                 locale,
-                extraHttpHeaders,
+                extraHTTPHeaders,
                 chromiumSandbox,
                 handleSIGINT,
                 handleSIGTERM,
                 handleSIGHUP,
-                videosPath,
-                videoSize).ConfigureAwait(false) as IChromiumBrowserContext;
+                recordHar,
+                recordVideo).ConfigureAwait(false) as IChromiumBrowserContext;
 
         /// <inheritdoc/>
         public new async Task<IChromiumBrowserContext> LaunchPersistentContextAsync(string userDataDir, LaunchPersistentOptions options)

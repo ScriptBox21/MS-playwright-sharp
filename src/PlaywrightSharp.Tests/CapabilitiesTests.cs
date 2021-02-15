@@ -2,12 +2,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using PlaywrightSharp.Tests.Attributes;
 using PlaywrightSharp.Tests.BaseTests;
+using PlaywrightSharp.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace PlaywrightSharp.Tests
 {
-    ///<playwright-file>capabilities.spec.js</playwright-file>
+    ///<playwright-file>capabilities.spec.ts</playwright-file>
     [Collection(TestConstants.TestFixtureBrowserCollectionName)]
     public class CapabilitiesTests : PlaywrightSharpPageBaseTest
     {
@@ -16,8 +17,7 @@ namespace PlaywrightSharp.Tests
         {
         }
 
-        ///<playwright-file>capabilities.spec.js</playwright-file>     
-        ///<playwright-it>Web Assembly should work</playwright-it>
+        [PlaywrightTest("capabilities.spec.ts", "Web Assembly should work")]
         [SkipBrowserAndPlatformFact(skipWebkit: true, skipWindows: true)]
         public async Task WebAssemblyShouldWork()
         {
@@ -26,8 +26,7 @@ namespace PlaywrightSharp.Tests
         }
 
 #if NETCOREAPP
-        ///<playwright-file>capabilities.spec.js</playwright-file>
-        ///<playwright-it>WebSocket should work</playwright-it>
+        [PlaywrightTest("capabilities.spec.ts", "WebSocket should work")]
         [SkipBrowserAndPlatformFact(skipWebkit: true, skipWindows: true)]
         public async Task WebSocketShouldWork()
         {
@@ -45,9 +44,8 @@ namespace PlaywrightSharp.Tests
         }
 #endif
 
-        ///<playwright-file>capabilities.spec.js</playwright-file>
-        ///<playwright-it>should respect CSP</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("capabilities.spec.ts", "should respect CSP")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldRespectCSP()
         {
             Server.SetRoute("/empty.html", context =>
@@ -68,12 +66,11 @@ namespace PlaywrightSharp.Tests
             Assert.Equal("SUCCESS", await Page.EvaluateAsync<string>("() => window.testStatus"));
         }
 
-        ///<playwright-file>capabilities.spec.js</playwright-file>
-        ///<playwright-it>should play video</playwright-it>
-        [SkipBrowserAndPlatformFact(skipWebkit: true, skipWindows: true, skipOSX: true)]
+        [PlaywrightTest("capabilities.spec.ts", "should play video")]
+        [SkipBrowserAndPlatformFact(skipWebkit: true)]
         public async Task ShouldPlayVideo()
         {
-            await Page.GoToAsync(TestConstants.ServerUrl + "/video.html");
+            await Page.GoToAsync(TestConstants.ServerUrl + (TestConstants.IsWebKit ? "/video_mp4.html" : "/video.html"));
             await Page.EvalOnSelectorAsync("video", "v => v.play()");
             await Page.EvalOnSelectorAsync("video", "v => v.pause()");
         }

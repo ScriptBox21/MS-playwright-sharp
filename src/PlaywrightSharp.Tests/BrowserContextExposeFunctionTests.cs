@@ -2,12 +2,12 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using PlaywrightSharp.Tests.BaseTests;
+using PlaywrightSharp.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace PlaywrightSharp.Tests
 {
-    ///<playwright-file>browsercontext-expose-function.spec.ts</playwright-file>
     [Collection(TestConstants.TestFixtureBrowserCollectionName)]
     public class BrowserContextExposeFunctionTests : PlaywrightSharpBrowserContextBaseTest
     {
@@ -16,9 +16,8 @@ namespace PlaywrightSharp.Tests
         {
         }
 
-        ///<playwright-file>browsercontext-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>expose binding should work</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("browsercontext-expose-function.spec.ts", "expose binding should work")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ExposeBindingShouldWork()
         {
             BindingSource bindingSource = null;
@@ -41,9 +40,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(11, result);
         }
 
-        ///<playwright-file>browsercontext-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should work</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("browsercontext-expose-function.spec.ts", "should work")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWork()
         {
             await Context.ExposeFunctionAsync("add", (int a, int b) => a + b);
@@ -60,9 +58,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(5, result.GetProperty("sub").GetInt32());
         }
 
-        ///<playwright-file>browsercontext-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should throw for duplicate registrations</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("browsercontext-expose-function.spec.ts", "should throw for duplicate registrations")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldThrowForDuplicateRegistrations()
         {
             await Context.ExposeFunctionAsync("foo", () => { });
@@ -80,9 +77,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal("Function \"baz\" has been already registered in one of the pages", exception.Message);
         }
 
-        ///<playwright-file>browsercontext-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should be callable from-inside addInitScript</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("browsercontext-expose-function.spec.ts", "should be callable from-inside addInitScript")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldBeCallableFromInsideAddInitScript()
         {
             var args = new List<object>();
@@ -98,9 +94,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(new List<object> { "context", "page" }, args);
         }
 
-        ///<playwright-file>browsercontext-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>exposeBindingHandle should work</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("browsercontext-expose-function.spec.ts", "exposeBindingHandle should work")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ExposeBindingHandleShouldWork()
         {
             IJSHandle target = null;

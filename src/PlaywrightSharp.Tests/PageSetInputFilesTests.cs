@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using PlaywrightSharp.Tests.BaseTests;
+using PlaywrightSharp.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace PlaywrightSharp.Tests
 {
-    ///<playwright-file>page-set-input-files.spec.js</playwright-file>
+    ///<playwright-file>page-set-input-files.spec.ts</playwright-file>
     [Collection(TestConstants.TestFixtureBrowserCollectionName)]
     public class PageSetInputFilesTests : PlaywrightSharpPageBaseTest
     {
@@ -19,9 +20,8 @@ namespace PlaywrightSharp.Tests
         {
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should upload the file</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should upload the file")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldUploadTheFile()
         {
             await Page.GoToAsync(TestConstants.ServerUrl + "/input/fileupload.html");
@@ -37,9 +37,8 @@ namespace PlaywrightSharp.Tests
             }", input));
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should work</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should work")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWork()
         {
             await Page.SetContentAsync("<input type=file>");
@@ -50,9 +49,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal("file-to-upload.txt", await Page.EvalOnSelectorAsync<string>("input", "e => e.files[0].name"));
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should set from memory</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should set from memory")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldSetFromMemory()
         {
             await Page.SetContentAsync("<input type=file>");
@@ -68,9 +66,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal("test.txt", await Page.EvalOnSelectorAsync<string>("input", "e => e.files[0].name"));
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should emit event once</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should emit event once")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldEmitEventOnce()
         {
             await Page.SetContentAsync("<input type=file>");
@@ -88,23 +85,20 @@ namespace PlaywrightSharp.Tests
             Assert.NotNull(chooser);
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should emit event on/off</playwright-it>
+        [PlaywrightTest("page-set-input-files.spec.ts", "should emit event on/off")]
         [Fact(Skip = "We dont'need to test this")]
         public void ShouldEmitEventOnOff()
         {
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should emit addListener/removeListener</playwright-it>
+        [PlaywrightTest("page-set-input-files.spec.ts", "should emit addListener/removeListener")]
         [Fact(Skip = "We dont'need to test this")]
         public void ShouldEmitEventAddListenerRemoveListener()
         {
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should work when file input is attached to DOM</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should work when file input is attached to DOM")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWhenFileInputIsAttachedToDOM()
         {
             await Page.SetContentAsync("<input type=file>");
@@ -115,9 +109,8 @@ namespace PlaywrightSharp.Tests
             Assert.NotNull(chooser?.Element);
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should work when file input is not attached to DOM</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should work when file input is not attached to DOM")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWhenFileInputIsNotAttachedToDOM()
         {
             var (chooser, _) = await TaskUtils.WhenAll(
@@ -132,9 +125,8 @@ namespace PlaywrightSharp.Tests
         }
 
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should work with CSP</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should work with CSP")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithCSP()
         {
             Server.SetCSP("/empty.html", "default-src \"none\"");
@@ -146,33 +138,29 @@ namespace PlaywrightSharp.Tests
             Assert.Equal("file-to-upload.txt", await Page.EvalOnSelectorAsync<string>("input", "input => input.files[0].name"));
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should respect timeout</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should respect timeout")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public Task ShouldRespectTimeout() => Assert.ThrowsAsync<TimeoutException>(()
             => Page.WaitForEventAsync(PageEvent.FileChooser, timeout: 1));
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should respect default timeout when there is no custom timeout</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should respect default timeout when there is no custom timeout")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldRespectDefaultTimeoutWhenThereIsNoCustomTimeout()
         {
             Page.DefaultTimeout = 1;
             await Assert.ThrowsAsync<TimeoutException>(() => Page.WaitForEventAsync(PageEvent.FileChooser));
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should prioritize exact timeout over default timeout</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should prioritize exact timeout over default timeout")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldPrioritizeExactTimeoutOverDefaultTimeout()
         {
             Page.DefaultTimeout = 0;
             await Assert.ThrowsAsync<TimeoutException>(() => Page.WaitForEventAsync(PageEvent.FileChooser, timeout: 1));
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should work with no timeout</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should work with no timeout")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithNoTimeout()
         {
             var (chooser, _) = await TaskUtils.WhenAll(
@@ -186,9 +174,8 @@ namespace PlaywrightSharp.Tests
             Assert.NotNull(chooser?.Element);
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should return the same file chooser when there are many watchdogs simultaneously</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should return the same file chooser when there are many watchdogs simultaneously")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldReturnTheSameFileChooserWhenThereAreManyWatchdogsSimultaneously()
         {
             await Page.SetContentAsync("<input type=file>");
@@ -200,9 +187,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(fileChooser1, fileChooser2);
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should accept single file</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should accept single file")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldAcceptSingleFile()
         {
             await Page.SetContentAsync("<input type=file oninput='javascript:console.timeStamp()'>");
@@ -218,10 +204,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal("file-to-upload.txt", await Page.EvalOnSelectorAsync<string>("input", "input => input.files[0].name"));
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-
-        ///<playwright-it>should detect mime type</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should detect mime type")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldDetectMimeType()
         {
             var files = new List<(string name, string mime, byte[] content)>();
@@ -263,9 +247,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(File.ReadAllBytes(TestUtils.GetWebServerFile("pptr.png")), files[1].content);
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should be able to read selected file</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should be able to read selected file")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldBeAbleToReadSelectedFile()
         {
             await Page.SetContentAsync("<input type=file>");
@@ -281,9 +264,8 @@ namespace PlaywrightSharp.Tests
             }"));
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should be able to reset selected files with empty file list</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should be able to reset selected files with empty file list")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldBeAbleToResetSelectedFilesWithEmptyFileList()
         {
             await Page.SetContentAsync("<input type=file>");
@@ -303,9 +285,8 @@ namespace PlaywrightSharp.Tests
             }"));
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should not accept multiple files for single-file input</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should not accept multiple files for single-file input")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldNotAcceptMultipleFilesForSingleFileInput()
         {
             await Page.SetContentAsync("<input type=file>");
@@ -320,9 +301,8 @@ namespace PlaywrightSharp.Tests
             }));
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should emit input and change events</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should emit input and change events")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldEmitInputAndChangeEvents()
         {
             var events = new List<string>();
@@ -342,9 +322,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal("change", events[1]);
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should work for single file pick</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", "should work for single file pick")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkForSingleFilePick()
         {
             await Page.SetContentAsync("<input type=file>");
@@ -357,9 +336,8 @@ namespace PlaywrightSharp.Tests
             Assert.False(fileChooser.IsMultiple);
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should work for "multiple"</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", @"should work for ""multiple""")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkForMultiple()
         {
             await Page.SetContentAsync("<input multiple type=file>");
@@ -370,9 +348,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(fileChooser.IsMultiple);
         }
 
-        ///<playwright-file>page-set-input-files.spec.js</playwright-file>
-        ///<playwright-it>should work for "webkitdirectory"</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-set-input-files.spec.ts", @"should work for ""webkitdirectory""")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkForWebkitdirectory()
         {
             await Page.SetContentAsync("<input multiple webkitdirectory type=file>");

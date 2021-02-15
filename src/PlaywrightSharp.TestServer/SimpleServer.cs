@@ -15,15 +15,23 @@ namespace PlaywrightSharp.TestServer
 {
     public class SimpleServer
     {
+        const int MaxMessageSize = 256 * 1024;
+
         private readonly IDictionary<string, Action<HttpContext>> _subscribers;
         private readonly IDictionary<string, Action<HttpContext>> _requestWaits;
         private readonly IDictionary<string, RequestDelegate> _routes;
         private readonly IDictionary<string, (string username, string password)> _auths;
         private readonly IDictionary<string, string> _csp;
         private readonly IWebHost _webHost;
+        private static int counter;
+        private readonly Dictionary<int, WebSocket> _clients = new Dictionary<int, WebSocket>();
 
         internal IList<string> GzipRoutes { get; }
+
+        public event EventHandler<RequestReceivedEventArgs> RequestReceived;
+
         public static SimpleServer Create(int port, string contentRoot) => new SimpleServer(port, contentRoot, isHttps: false);
+
         public static SimpleServer CreateHttps(int port, string contentRoot) => new SimpleServer(port, contentRoot, isHttps: true);
 
         public SimpleServer(int port, string contentRoot, bool isHttps)
@@ -46,12 +54,15 @@ namespace PlaywrightSharp.TestServer
 #endif
                     .Use(async (context, next) =>
                     {
+                        RequestReceived?.Invoke(this, new RequestReceivedEventArgs { Request = context.Request });
+
                         if (context.Request.Path == "/ws")
                         {
                             if (context.WebSockets.IsWebSocketRequest)
                             {
                                 var webSocket = await context.WebSockets.AcceptWebSocketAsync();
                                 await webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes("incoming")), WebSocketMessageType.Text, true, CancellationToken.None);
+                                await ReceiveLoopAsync(webSocket, context.Request.Headers["User-Agent"].ToString().Contains("Firefox"), CancellationToken.None);
                             }
                             else if (!context.Response.HasStarted)
                             {
@@ -204,6 +215,75 @@ namespace PlaywrightSharp.TestServer
                 return auth == $"{username}:{password}";
             }
             return false;
+        }
+
+        private async Task ReceiveLoopAsync(WebSocket webSocket, bool sendCloseMessage, CancellationToken token)
+        {
+            int connectionId = NextConnectionId();
+            _clients.Add(connectionId, webSocket);
+
+            byte[] buffer = new byte[MaxMessageSize];
+
+            try
+            {
+                while (true)
+                {
+                    var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), token);
+
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        if (sendCloseMessage)
+                        {
+                            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Close", CancellationToken.None);
+                        }
+                        break;
+                    }
+
+                    var data = await ReadFrames(result, webSocket, buffer, token);
+
+                    if (data.Count == 0)
+                    {
+                        break;
+                    }
+                }
+            }
+            finally
+            {
+                _clients.Remove(connectionId);
+            }
+        }
+
+        private async Task<ArraySegment<byte>> ReadFrames(WebSocketReceiveResult result, WebSocket webSocket, byte[] buffer, CancellationToken token)
+        {
+            int count = result.Count;
+
+            while (!result.EndOfMessage)
+            {
+                if (count >= MaxMessageSize)
+                {
+                    string closeMessage = string.Format("Maximum message size: {0} bytes.", MaxMessageSize);
+                    await webSocket.CloseAsync(WebSocketCloseStatus.MessageTooBig, closeMessage, CancellationToken.None);
+                    return new ArraySegment<byte>();
+                }
+
+                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer, count, MaxMessageSize - count), CancellationToken.None);
+                count += result.Count;
+
+            }
+            return new ArraySegment<byte>(buffer, 0, count);
+        }
+
+
+        private static int NextConnectionId()
+        {
+            int id = Interlocked.Increment(ref counter);
+
+            if (id == int.MaxValue)
+            {
+                throw new Exception("connection id limit reached: " + id);
+            }
+
+            return id;
         }
     }
 }

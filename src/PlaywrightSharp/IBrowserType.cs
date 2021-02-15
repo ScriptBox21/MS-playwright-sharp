@@ -39,9 +39,9 @@ namespace PlaywrightSharp
         /// <param name="timeout">Maximum time in milliseconds to wait for the browser instance to start.</param>
         /// <param name="dumpIO">Whether to pipe browser process stdout and stderr into process.stdout and process.stderr. Defaults to false.</param>
         /// <param name="slowMo">Slows down PlaywrightSharp operations by the specified amount of milliseconds. Useful so that you can see what is going on.</param>
-        /// <param name="ignoreDefaultArgs">If true, Playwright does not pass its own configurations args and only uses the ones from args.
+        /// <param name="ignoreAllDefaultArgs">If true, Playwright does not pass its own configurations args and only uses the ones from args.
         /// Dangerous option; use with care. Defaults to false.</param>
-        /// <param name="ignoredDefaultArgs">if <paramref name="ignoreDefaultArgs"/> is set to <c>false</c> this list will be used to filter default arguments.</param>
+        /// <param name="ignoreDefaultArgs">if <paramref name="ignoreDefaultArgs"/> is set to <c>false</c> this list will be used to filter default arguments.</param>
         /// <param name="env">Specify environment variables that will be visible to browser. Defaults to Environment variables.</param>
         /// <param name="firefoxUserPrefs">Firefox user preferences. Learn more about the Firefox user preferences at about:config.</param>
         /// <param name="proxy">Network proxy settings.</param>
@@ -61,8 +61,8 @@ namespace PlaywrightSharp
             int? timeout = null,
             bool? dumpIO = null,
             int? slowMo = null,
-            bool? ignoreDefaultArgs = null,
-            string[] ignoredDefaultArgs = null,
+            bool? ignoreAllDefaultArgs = null,
+            string[] ignoreDefaultArgs = null,
             Dictionary<string, string> env = null,
             Dictionary<string, object> firefoxUserPrefs = null,
             ProxySettings proxy = null,
@@ -93,11 +93,10 @@ namespace PlaywrightSharp
         /// <param name="timeout">Maximum time in milliseconds to wait for the browser instance to start.</param>
         /// <param name="dumpIO">Whether to pipe browser process stdout and stderr into process.stdout and process.stderr. Defaults to false.</param>
         /// <param name="slowMo">Slows down PlaywrightSharp operations by the specified amount of milliseconds. Useful so that you can see what is going on.</param>
-        /// <param name="ignoreDefaultArgs">If true, Playwright does not pass its own configurations args and only uses the ones from args.
+        /// <param name="ignoreAllDefaultArgs">If true, Playwright does not pass its own configurations args and only uses the ones from args.
         /// Dangerous option; use with care. Defaults to false.</param>
-        /// <param name="ignoredDefaultArgs">if <paramref name="ignoreDefaultArgs"/> is set to <c>false</c> this list will be used to filter default arguments.</param>
+        /// <param name="ignoreDefaultArgs">if <paramref name="ignoreDefaultArgs"/> is set to <c>false</c> this list will be used to filter default arguments.</param>
         /// <param name="env">Specify environment variables that will be visible to browser. Defaults to Environment variables.</param>
-        /// <param name="firefoxUserPrefs">Firefox user preferences. Learn more about the Firefox user preferences at about:config.</param>
         /// <param name="proxy">Network proxy settings.</param>
         /// <param name="userAgent">Specific user agent to use in this context.</param>
         /// <param name="bypassCSP">Toggles bypassing page's Content-Security-Policy.</param>
@@ -113,15 +112,16 @@ namespace PlaywrightSharp
         /// <param name="acceptDownloads">Whether to automatically download all the attachments. Defaults to false where all the downloads are canceled.</param>
         /// <param name="colorScheme">Emulates 'prefers-colors-scheme' media feature.</param>
         /// <param name="locale">Specify user locale, for example en-GB, de-DE, etc. Locale will affect navigator.language value, Accept-Language request header value as well as number and date formatting rules.</param>
-        /// <param name="extraHttpHeaders">An object containing additional HTTP headers to be sent with every request.</param>
+        /// <param name="extraHTTPHeaders">An object containing additional HTTP headers to be sent with every request.</param>
         /// <param name="chromiumSandbox">Enable Chromium sandboxing. Defaults to true.</param>
         /// <param name="handleSIGINT">Close the browser process on Ctrl-C. Defaults to true.</param>
         /// <param name="handleSIGTERM">Close the browser process on SIGTERM. Defaults to true.</param>
         /// <param name="handleSIGHUP">Close the browser process on SIGHUP. Defaults to true.</param>
-        /// <param name="videosPath">Enables video recording for all pages to videosPath folder. If not specified, videos are not recorded.</param>
-        /// <param name="videoSize">Specifies dimensions of the automatically recorded video. Can only be used if <paramref name="videosPath"/> is set.
-        /// If not specified the size will be equal to viewport. If viewport is not configured explicitly the video size defaults to 1280x720.
-        /// Actual picture of the page will be scaled down if necessary to fit specified size.</param>
+        /// <param name="recordHar">Enables HAR recording for all pages into recordHar.path file. If not specified, the HAR is not recorded.
+        /// Make sure to await <see cref="IPage.CloseAsync(bool)"/> for the HAR to be saved.
+        /// You can use <see cref="Har.HarResult"/> to deserialize the generated JSON file.</param>
+        /// <param name="recordVideo">Enables video recording for all pages into recordVideo.dir directory. If not specified videos are not recorded.
+        /// Make sure to await <seealso cref="BrowserContext.CloseAsync"/> for videos to be saved.</param>
         /// <returns>A <see cref="Task"/> that completes when the browser is launched, yielding the browser server.</returns>
         Task<IBrowserContext> LaunchPersistentContextAsync(
             string userDataDir,
@@ -135,10 +135,9 @@ namespace PlaywrightSharp
             int? timeout = null,
             bool? dumpIO = null,
             int? slowMo = null,
-            bool? ignoreDefaultArgs = null,
-            string[] ignoredDefaultArgs = null,
+            bool? ignoreAllDefaultArgs = null,
+            string[] ignoreDefaultArgs = null,
             Dictionary<string, string> env = null,
-            Dictionary<string, object> firefoxUserPrefs = null,
             ProxySettings proxy = null,
             string userAgent = null,
             bool? bypassCSP = null,
@@ -154,13 +153,13 @@ namespace PlaywrightSharp
             bool? acceptDownloads = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
+            Dictionary<string, string> extraHTTPHeaders = null,
             bool? chromiumSandbox = null,
             bool? handleSIGINT = null,
             bool? handleSIGTERM = null,
             bool? handleSIGHUP = null,
-            string videosPath = null,
-            ViewportSize videoSize = null);
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null);
 
         /// <summary>
         /// Launches browser that uses persistent storage located at userDataDir and returns the only context. Closing this context will automatically close the browser.
@@ -175,11 +174,10 @@ namespace PlaywrightSharp
         /// <param name="timeout">Maximum time in milliseconds to wait for the browser instance to start.</param>
         /// <param name="dumpIO">Whether to pipe browser process stdout and stderr into process.stdout and process.stderr. Defaults to false.</param>
         /// <param name="slowMo">Slows down PlaywrightSharp operations by the specified amount of milliseconds. Useful so that you can see what is going on.</param>
-        /// <param name="ignoreDefaultArgs">If true, Playwright does not pass its own configurations args and only uses the ones from args.
+        /// <param name="ignoreAllDefaultArgs">If true, Playwright does not pass its own configurations args and only uses the ones from args.
         /// Dangerous option; use with care. Defaults to false.</param>
-        /// <param name="ignoredDefaultArgs">if <paramref name="ignoreDefaultArgs"/> is set to <c>false</c> this list will be used to filter default arguments.</param>
+        /// <param name="ignoreDefaultArgs">if <paramref name="ignoreDefaultArgs"/> is set to <c>false</c> this list will be used to filter default arguments.</param>
         /// <param name="env">Specify environment variables that will be visible to browser. Defaults to Environment variables.</param>
-        /// <param name="firefoxUserPrefs">Firefox user preferences. Learn more about the Firefox user preferences at about:config.</param>
         /// <param name="proxy">Network proxy settings.</param>
         /// <param name="userAgent">Specific user agent to use in this context.</param>
         /// <param name="bypassCSP">Toggles bypassing page's Content-Security-Policy.</param>
@@ -195,15 +193,16 @@ namespace PlaywrightSharp
         /// <param name="acceptDownloads">Whether to automatically download all the attachments. Defaults to false where all the downloads are canceled.</param>
         /// <param name="colorScheme">Emulates 'prefers-colors-scheme' media feature.</param>
         /// <param name="locale">Specify user locale, for example en-GB, de-DE, etc. Locale will affect navigator.language value, Accept-Language request header value as well as number and date formatting rules.</param>
-        /// <param name="extraHttpHeaders">An object containing additional HTTP headers to be sent with every request.</param>
+        /// <param name="extraHTTPHeaders">An object containing additional HTTP headers to be sent with every request.</param>
         /// <param name="chromiumSandbox">Enable Chromium sandboxing. Defaults to true.</param>
         /// <param name="handleSIGINT">Close the browser process on Ctrl-C. Defaults to true.</param>
         /// <param name="handleSIGTERM">Close the browser process on SIGTERM. Defaults to true.</param>
         /// <param name="handleSIGHUP">Close the browser process on SIGHUP. Defaults to true.</param>
-        /// <param name="videosPath">Enables video recording for all pages to videosPath folder. If not specified, videos are not recorded.</param>
-        /// <param name="videoSize">Specifies dimensions of the automatically recorded video. Can only be used if <paramref name="videosPath"/> is set.
-        /// If not specified the size will be equal to viewport. If viewport is not configured explicitly the video size defaults to 1280x720.
-        /// Actual picture of the page will be scaled down if necessary to fit specified size.</param>
+        /// <param name="recordHar">Enables HAR recording for all pages into recordHar.path file. If not specified, the HAR is not recorded.
+        /// Make sure to await <see cref="IPage.CloseAsync(bool)"/> for the HAR to be saved.
+        /// You can use <see cref="Har.HarResult"/> to deserialize the generated JSON file.</param>
+        /// <param name="recordVideo">Enables video recording for all pages into recordVideo.dir directory. If not specified videos are not recorded.
+        /// Make sure to await <seealso cref="BrowserContext.CloseAsync"/> for videos to be saved.</param>
         /// <returns>A <see cref="Task"/> that completes when the browser is launched, yielding the browser server.</returns>
         Task<IBrowserContext> LaunchPersistentContextAsync(
             string userDataDir,
@@ -216,10 +215,9 @@ namespace PlaywrightSharp
             int? timeout = null,
             bool? dumpIO = null,
             int? slowMo = null,
-            bool? ignoreDefaultArgs = null,
-            string[] ignoredDefaultArgs = null,
+            bool? ignoreAllDefaultArgs = null,
+            string[] ignoreDefaultArgs = null,
             Dictionary<string, string> env = null,
-            Dictionary<string, object> firefoxUserPrefs = null,
             ProxySettings proxy = null,
             string userAgent = null,
             bool? bypassCSP = null,
@@ -235,13 +233,13 @@ namespace PlaywrightSharp
             bool? acceptDownloads = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
+            Dictionary<string, string> extraHTTPHeaders = null,
             bool? chromiumSandbox = null,
             bool? handleSIGINT = null,
             bool? handleSIGTERM = null,
             bool? handleSIGHUP = null,
-            string videosPath = null,
-            ViewportSize videoSize = null);
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null);
 
         /// <summary>
         /// Launches browser that uses persistent storage located at userDataDir and returns the only context. Closing this context will automatically close the browser.

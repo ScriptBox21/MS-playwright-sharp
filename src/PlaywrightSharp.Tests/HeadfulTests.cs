@@ -4,12 +4,14 @@ using PlaywrightSharp.Helpers;
 using PlaywrightSharp.Input;
 using PlaywrightSharp.Tests.Attributes;
 using PlaywrightSharp.Tests.BaseTests;
+using PlaywrightSharp.Tests.Helpers;
+using PlaywrightSharp.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace PlaywrightSharp.Tests
 {
-    ///<playwright-file>headful.spec.js</playwright-file>
+    ///<playwright-file>headful.spec.ts</playwright-file>
 
     [Collection(TestConstants.TestFixtureBrowserCollectionName)]
     public class HeadfulTests : PlaywrightSharpBaseTest
@@ -19,9 +21,8 @@ namespace PlaywrightSharp.Tests
         {
         }
 
-        ///<playwright-file>headful.spec.js</playwright-file>
-        ///<playwright-it>should have default url when launching browser</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("headful.spec.ts", "should have default url when launching browser")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldHaveDefaultUrlWhenLaunchingBrowser()
         {
             using var tempDir = new TempDirectory();
@@ -30,9 +31,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(new[] { "about:blank" }, pages);
         }
 
-        ///<playwright-file>headful.spec.js</playwright-file>
-        ///<playwright-it>headless should be able to read cookies written by headful</playwright-it>
-        [SkipBrowserAndPlatformFact(skipChromium: true, skipWindows: true)]
+        [PlaywrightTest("headful.spec.ts", "headless should be able to read cookies written by headful")]
+        [Fact(Skip = "Flaky")]
         public async Task HeadlessShouldBeAbleToReadCookiesWrittenByHeadful()
         {
             using var userDataDir = new TempDirectory();
@@ -56,9 +56,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal("foo=true", cookie);
         }
 
-        ///<playwright-file>headful.spec.js</playwright-file>
-        ///<playwright-it>should close browser with beforeunload page</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("headful.spec.ts", "should close browser with beforeunload page")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldCloseBrowserWithBeforeunloadPage()
         {
             using var userDataDir = new TempDirectory();
@@ -70,9 +69,8 @@ namespace PlaywrightSharp.Tests
             await page.ClickAsync("body");
         }
 
-        ///<playwright-file>headful.spec.js</playwright-file>
-        ///<playwright-it>should not crash when creating second context</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("headful.spec.ts", "should not crash when creating second context")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldNotCrashWhenCreatingSecondContext()
         {
             await using var browser = await BrowserType.LaunchAsync(TestConstants.GetHeadfulOptions());
@@ -88,9 +86,8 @@ namespace PlaywrightSharp.Tests
             }
         }
 
-        ///<playwright-file>headful.spec.js</playwright-file>
-        ///<playwright-it>should click background tab</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("headful.spec.ts", "should click background tab")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldClickBackgroundTab()
         {
             await using var browser = await BrowserType.LaunchAsync(TestConstants.GetHeadfulOptions());
@@ -100,9 +97,8 @@ namespace PlaywrightSharp.Tests
             await page.ClickAsync("button");
         }
 
-        ///<playwright-file>headful.spec.js</playwright-file>
-        ///<playwright-it>should close browser after context menu was triggered</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("headful.spec.ts", "should close browser after context menu was triggered")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldCloseBrowserAfterContextMenuWasTriggered()
         {
             await using var browser = await BrowserType.LaunchAsync(TestConstants.GetHeadfulOptions());
@@ -111,9 +107,8 @@ namespace PlaywrightSharp.Tests
             await page.ClickAsync("body", button: MouseButton.Right);
         }
 
-        ///<playwright-file>headful.spec.js</playwright-file>
-        ///<playwright-it>should(not) block third party cookies</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("headful.spec.ts", "should(not) block third party cookies")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldNotBlockThirdPartyCookies()
         {
             await using var browser = await BrowserType.LaunchAsync(TestConstants.GetHeadfulOptions());
@@ -159,8 +154,7 @@ namespace PlaywrightSharp.Tests
             }
         }
 
-        ///<playwright-file>headful.spec.js</playwright-file>
-        ///<playwright-it>should not override viewport size when passed null</playwright-it>
+        [PlaywrightTest("headful.spec.ts", "should not override viewport size when passed null")]
         [SkipBrowserAndPlatformFact(skipWebkit: true)]
         public async Task ShouldNotOverrideViewportSizeWhenPassedNull()
         {
@@ -182,9 +176,8 @@ namespace PlaywrightSharp.Tests
             await popup.WaitForFunctionAsync("() => window.outerWidth === 500 && window.outerHeight === 450");
         }
 
-        ///<playwright-file>headful.spec.js</playwright-file>
-        ///<playwright-it>Page.bringToFront should work</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("headful.spec.ts", "Page.bringToFront should work")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task PageBringToFrontShouldWork()
         {
             await using var browser = await BrowserType.LaunchAsync(TestConstants.GetHeadfulOptions());

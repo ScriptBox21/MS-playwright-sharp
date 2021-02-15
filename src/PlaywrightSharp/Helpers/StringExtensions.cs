@@ -633,7 +633,7 @@ namespace PlaywrightSharp.Helpers
 
             var result = new Dictionary<string, string>();
 
-            if (query.StartsWith("?"))
+            if (query.StartsWith("?", StringComparison.InvariantCultureIgnoreCase))
             {
                 query = query.Substring(1, query.Length - 1);
             }
@@ -769,6 +769,13 @@ namespace PlaywrightSharp.Helpers
             tokens.Add("$");
             return new Regex(string.Concat(tokens.ToArray()));
         }
+
+        /// <summary>
+        /// Converts a string to a byte array. It's a shortcut for Convert.FromBase64String.
+        /// </summary>
+        /// <param name="value">Value to parse.</param>
+        /// <returns>Value as an array of bytes.</returns>
+        public static byte[] AsBinary(this string value) => Convert.FromBase64String(value);
 
         internal static string GetContentType(this string path)
         {

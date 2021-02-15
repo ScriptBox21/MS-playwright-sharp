@@ -1,12 +1,12 @@
 using System.Threading.Tasks;
 using PlaywrightSharp.Tests.BaseTests;
-using PlaywrightSharp.Tests.Helpers;
+using PlaywrightSharp.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace PlaywrightSharp.Tests
 {
-    ///<playwright-file>selectors-register.spec.js</playwright-file>
+    ///<playwright-file>selectors-register.spec.ts</playwright-file>
     [Collection(TestConstants.TestFixtureBrowserCollectionName)]
     public class SelectorsRegisterTests : PlaywrightSharpPageBaseTest
     {
@@ -15,9 +15,8 @@ namespace PlaywrightSharp.Tests
         {
         }
 
-        ///<playwright-file>selectors-register.spec.js</playwright-file>
-        ///<playwright-it>should work</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("selectors-register.spec.ts", "should work")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWork()
         {
             const string createTagSelector = @"({
@@ -38,23 +37,12 @@ namespace PlaywrightSharp.Tests
             var page = await context.NewPageAsync();
             await page.SetContentAsync("<div><span></span></div><div></div>");
 
-            Assert.Equal("DIV", await ((PlaywrightSharp.ElementHandle)await page.QuerySelectorAsync("DIV")).CreateSelectorForTestAsync("tag"));
-            Assert.Equal("DIV", await page.EvalOnSelectorAsync<string>("tag=DIV", "e => e.nodeName"));
-            Assert.Equal("SPAN", await page.EvalOnSelectorAsync<string>("tag=SPAN", "e => e.nodeName"));
-            Assert.Equal(2, await page.EvalOnSelectorAllAsync<int>("tag=DIV", "es => es.length"));
-
-            Assert.Equal("DIV", await ((PlaywrightSharp.ElementHandle)await page.QuerySelectorAsync("DIV")).CreateSelectorForTestAsync("tag2"));
-            Assert.Equal("DIV", await page.EvalOnSelectorAsync<string>("tag2=DIV", "e => e.nodeName"));
-            Assert.Equal("SPAN", await page.EvalOnSelectorAsync<string>("tag2=SPAN", "e => e.nodeName"));
-            Assert.Equal(2, await page.EvalOnSelectorAllAsync<int>("tag2=DIV", "es => es.length"));
-
             var exception = await Assert.ThrowsAnyAsync<PlaywrightSharpException>(() => page.QuerySelectorAsync("tAG=DIV"));
             Assert.Contains("Unknown engine \"tAG\" while parsing selector tAG=DIV", exception.Message);
         }
 
-        ///<playwright-file>selectors-register.spec.js</playwright-file>
-        ///<playwright-it>should work with path</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("selectors-register.spec.ts", "should work with path")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithPath()
         {
             await TestUtils.RegisterEngineWithPathAsync(Playwright, "foo", TestUtils.GetWebServerFile("sectionselectorengine.js"));
@@ -62,9 +50,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal("SECTION", await Page.EvalOnSelectorAsync<string>("foo=whatever", "e => e.nodeName"));
         }
 
-        ///<playwright-file>selectors-register.spec.js</playwright-file>
-        ///<playwright-it>should work in main and isolated world</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("selectors-register.spec.ts", "should work in main and isolated world")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkInMainAndIsolatedWorld()
         {
             const string createTagSelector = @"({
@@ -73,7 +60,7 @@ namespace PlaywrightSharp.Tests
                   return window['__answer'];
                 },
                 queryAll(root, selector) {
-                  return [document.body, document.documentElement, window['__answer']];
+                  return window['__answer'] ? [window['__answer'], document.body, document.documentElement] : [];
                 }
             })";
 
@@ -98,9 +85,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal("SECTION", await Page.EvalOnSelectorAsync<string>("main=ignored >> css=section", "e => e.nodeName"));
         }
 
-        ///<playwright-file>selectors-register.spec.js</playwright-file>
-        ///<playwright-it>should handle errors</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("selectors-register.spec.ts", "should handle errors")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldHandleErrors()
         {
             var exception = await Assert.ThrowsAnyAsync<PlaywrightSharpException>(() => Page.QuerySelectorAsync("neverregister=ignored"));

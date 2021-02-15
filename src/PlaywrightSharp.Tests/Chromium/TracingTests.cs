@@ -1,18 +1,16 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using PlaywrightSharp.Chromium;
 using PlaywrightSharp.Tests.Attributes;
 using PlaywrightSharp.Tests.BaseTests;
+using PlaywrightSharp.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace PlaywrightSharp.Tests.Chromium
 {
-    ///<playwright-file>chromium/tracing.spec.js</playwright-file>
-    ///<playwright-describe>Chromium.startTracing</playwright-describe>
     [Collection(TestConstants.TestFixtureBrowserCollectionName)]
     public class TracingTests : PlaywrightSharpPageBaseTest
     {
@@ -55,9 +53,7 @@ namespace PlaywrightSharp.Tests.Chromium
             }
         }
 
-        ///<playwright-file>chromium/tracing.spec.js</playwright-file>
-        ///<playwright-describe>Chromium.startTracing</playwright-describe>
-        ///<playwright-it>should output a trace</playwright-it>
+        [PlaywrightTest("chromium/tracing.spec.ts", "tracing", "should output a trace")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldOutputATrace()
         {
@@ -68,9 +64,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.True(File.Exists(_file));
         }
 
-        ///<playwright-file>chromium/tracing.spec.js</playwright-file>
-        ///<playwright-describe>Chromium.startTracing</playwright-describe>
-        ///<playwright-it>should run with custom categories if provided</playwright-it>
+        [PlaywrightTest("chromium/tracing.spec.ts", "tracing", "should run with custom categories if provided")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldRunWithCustomCategoriesProvided()
         {
@@ -83,9 +77,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.Contains("disabled-by-default-v8.cpu_profiler.hires", traceJson.RootElement.GetProperty("metadata").GetProperty("trace-config").ToString());
         }
 
-        ///<playwright-file>chromium/tracing.spec.js</playwright-file>
-        ///<playwright-describe>Chromium.startTracing</playwright-describe>
-        ///<playwright-it>should throw if tracing on two pages</playwright-it>
+        [PlaywrightTest("chromium/tracing.spec.ts", "tracing", "should throw if tracing on two pages")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldThrowIfTracingOnTwoPages()
         {
@@ -100,9 +92,7 @@ namespace PlaywrightSharp.Tests.Chromium
             await ((IChromiumBrowser)Browser).StopTracingAsync();
         }
 
-        ///<playwright-file>chromium/tracing.spec.js</playwright-file>
-        ///<playwright-describe>Chromium.startTracing</playwright-describe>
-        ///<playwright-it>should return a buffer</playwright-it>
+        [PlaywrightTest("chromium/tracing.spec.ts", "tracing", "should return a buffer")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldReturnABuffer()
         {
@@ -113,9 +103,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.Equal(trace, buf);
         }
 
-        ///<playwright-file>chromium/tracing.spec.js</playwright-file>
-        ///<playwright-describe>Chromium.startTracing</playwright-describe>
-        ///<playwright-it>should work without options</playwright-it>
+        [PlaywrightTest("chromium/tracing.spec.ts", "tracing", "should work without options")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldWorkWithoutOptions()
         {
@@ -125,9 +113,7 @@ namespace PlaywrightSharp.Tests.Chromium
             Assert.NotNull(trace);
         }
 
-        ///<playwright-file>chromium/tracing.spec.js</playwright-file>
-        ///<playwright-describe>Chromium.startTracing</playwright-describe>
-        ///<playwright-it>should support a buffer without a path</playwright-it>
+        [PlaywrightTest("chromium/tracing.spec.ts", "tracing", "should support a buffer without a path")]
         [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldSupportABufferWithoutAPath()
         {

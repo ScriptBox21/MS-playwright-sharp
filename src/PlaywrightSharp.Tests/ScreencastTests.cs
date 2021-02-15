@@ -4,12 +4,14 @@ using Microsoft.AspNetCore.Http;
 using PlaywrightSharp.Helpers;
 using PlaywrightSharp.Tests.Attributes;
 using PlaywrightSharp.Tests.BaseTests;
+using PlaywrightSharp.Tests.Helpers;
+using PlaywrightSharp.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace PlaywrightSharp.Tests
 {
-    ///<playwright-file>screencast.spec.js</playwright-file>
+    ///<playwright-file>screencast.spec.ts</playwright-file>
     [Collection(TestConstants.TestFixtureBrowserCollectionName)]
     public class ScreencastTests : PlaywrightSharpBrowserBaseTest
     {
@@ -18,24 +20,35 @@ namespace PlaywrightSharp.Tests
         {
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>videoSize should require videosPath</playwright-it>
-        [SkipBrowserAndPlatformFact(skipWebkit: true, skipWindows: true)]
-        public async Task VideoSizeShouldRequireVideosPath()
+        [PlaywrightTest("screencast.spec.ts", "videoSize should require videosPath")]
+        [Fact(Skip = "We are not using old properties")]
+        public void VideoSizeShouldRequireVideosPath()
         {
-            var exception = await Assert.ThrowsAnyAsync<PlaywrightSharpException>(() => Browser.NewContextAsync(videoSize: new ViewportSize { Width = 100, Height = 100 }));
-            Assert.Contains("\"videoSize\" option requires \"videosPath\" to be specified", exception.Message);
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>should capture static page</playwright-it>
+        [PlaywrightTest("screencast.spec.ts", "should work with old options")]
+        [Fact(Skip = "We are not using old properties")]
+        public void ShouldWorkWithOldOptions()
+        {
+        }
+
+        [PlaywrightTest("screencast.spec.ts", "should throw without recordVideo.dir")]
+        [Fact(Skip = "We don't need to test this")]
+        public void ShouldThrowWithoutRecordVideoDir()
+        {
+        }
+
+        [PlaywrightTest("screencast.spec.ts", "should capture static page")]
         [SkipBrowserAndPlatformFact(skipWebkit: true, skipWindows: true)]
         public async Task ShouldCaptureStaticPage()
         {
             using var tempDirectory = new TempDirectory();
             var context = await Browser.NewContextAsync(
-                videosPath: tempDirectory.Path,
-                videoSize: new ViewportSize { Width = 100, Height = 100 });
+                recordVideo: new RecordVideoOptions
+                {
+                    Dir = tempDirectory.Path,
+                    Size = new ViewportSize { Width = 100, Height = 100 },
+                });
 
             var page = await context.NewPageAsync();
             await page.EvaluateAsync("() => document.body.style.backgroundColor = 'red'");
@@ -45,15 +58,17 @@ namespace PlaywrightSharp.Tests
             Assert.NotEmpty(new DirectoryInfo(tempDirectory.Path).GetFiles("*.webm"));
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>should expose video path</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("screencast.spec.ts", "should expose video path")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldExposeVideoPath()
         {
             using var tempDirectory = new TempDirectory();
             var context = await Browser.NewContextAsync(
-                videosPath: tempDirectory.Path,
-                videoSize: new ViewportSize { Width = 100, Height = 100 });
+                recordVideo: new RecordVideoOptions
+                {
+                    Dir = tempDirectory.Path,
+                    Size = new ViewportSize { Width = 100, Height = 100 }
+                });
 
             var page = await context.NewPageAsync();
             await page.EvaluateAsync("() => document.body.style.backgroundColor = 'red'");
@@ -64,15 +79,17 @@ namespace PlaywrightSharp.Tests
             Assert.True(new FileInfo(path).Exists);
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>should expose video path blank page</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("screencast.spec.ts", "should expose video path blank page")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldExposeVideoPathBlankPage()
         {
             using var tempDirectory = new TempDirectory();
             var context = await Browser.NewContextAsync(
-                videosPath: tempDirectory.Path,
-                videoSize: new ViewportSize { Width = 100, Height = 100 });
+                recordVideo: new RecordVideoOptions
+                {
+                    Dir = tempDirectory.Path,
+                    Size = new ViewportSize { Width = 100, Height = 100 }
+                });
 
             var page = await context.NewPageAsync();
             string path = await page.Video.GetPathAsync();
@@ -82,66 +99,62 @@ namespace PlaywrightSharp.Tests
             Assert.True(new FileInfo(path).Exists);
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>should expose video path blank popup</playwright-it>
+        [PlaywrightTest("screencast.spec.ts", "should expose video path blank popup")]
         [Fact(Skip = "We don't need to test video details")]
         public void ShouldExposeVideoPathBlankPopup()
         {
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>should capture navigation</playwright-it>
+        [PlaywrightTest("screencast.spec.ts", "should capture navigation")]
         [Fact(Skip = "We don't need to test video details")]
         public void ShouldCaptureNavigation()
         {
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>should capture css transformation</playwright-it>
+        [PlaywrightTest("screencast.spec.ts", "should capture css transformation")]
         [Fact(Skip = "We don't need to test video details")]
         public void ShouldCaptureCssTransformation()
         {
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>should work for popups</playwright-it>
+        [PlaywrightTest("screencast.spec.ts", "should work for popups")]
         [Fact(Skip = "We don't need to test video details")]
         public void ShouldWorkForPopups()
         {
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>should scale frames down to the requested size</playwright-it>
+        [PlaywrightTest("screencast.spec.ts", "should scale frames down to the requested size")]
         [Fact(Skip = "We don't need to test video details")]
         public void ShouldScaleFramesDownToTheRequestedSize()
         {
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>should use viewport as default size</playwright-it>
+        [PlaywrightTest("screencast.spec.ts", "should use viewport as default size")]
         [Fact(Skip = "We don't need to test video details")]
         public void ShouldUseViewportAsDefaultSize()
         {
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>should be 1280x720 by default</playwright-it>
+        [PlaywrightTest("screencast.spec.ts", "should be 1280x720 by default")]
         [Fact(Skip = "We don't need to test video details")]
         public void ShouldBe1280x720ByDefault()
         {
         }
 
-        ///<playwright-file>screencast.spec.js</playwright-file>     
-        ///<playwright-it>should capture static page in persistent context</playwright-it>
-        [SkipBrowserAndPlatformFact(skipWebkit: true, skipWindows: true)]
+        [PlaywrightTest("screencast.spec.ts", "should capture static page in persistent context")]
+        [SkipBrowserAndPlatformFact(skipWebkit: true, skipFirefox: true)]
         public async Task ShouldCaptureStaticPageInPersistentContext()
         {
             using var userDirectory = new TempDirectory();
             using var tempDirectory = new TempDirectory();
             var context = await BrowserType.LaunchPersistentContextAsync(
                 userDirectory.Path,
-                videosPath: tempDirectory.Path,
-                videoSize: new ViewportSize { Width = 100, Height = 100 });
+                recordVideo: new RecordVideoOptions
+                {
+                    Dir = tempDirectory.Path,
+                    Size = new ViewportSize { Width = 100, Height = 100 }
+                });
+
 
             var page = await context.NewPageAsync();
             await page.EvaluateAsync("() => document.body.style.backgroundColor = 'red'");

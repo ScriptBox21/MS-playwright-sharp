@@ -24,6 +24,7 @@ namespace PlaywrightSharp
             _initializer = initializer;
             RedirectedFrom = _initializer.RedirectedFrom?.Object;
             PostDataBuffer = _initializer.PostData != null ? Convert.FromBase64String(_initializer.PostData) : null;
+            Timing = new ResourceTiming();
 
             if (RedirectedFrom != null)
             {
@@ -44,6 +45,9 @@ namespace PlaywrightSharp
 
         /// <inheritdoc/>
         IChannel<Request> IChannelOwner<Request>.Channel => _channel;
+
+        /// <inheritdoc />
+        public ResourceTiming Timing { get; internal set; }
 
         /// <inheritdoc />
         public string Url => _initializer.Url;
@@ -84,7 +88,7 @@ namespace PlaywrightSharp
         public async Task<IResponse> GetResponseAsync() => (await _channel.GetResponseAsync().ConfigureAwait(false))?.Object;
 
         /// <inheritdoc />
-        public JsonDocument GetPostDataJsonAsync(JsonDocumentOptions options = default)
+        public JsonDocument GetPostDataJson(JsonDocumentOptions options = default)
         {
             string content = GetRequestForJson();
 

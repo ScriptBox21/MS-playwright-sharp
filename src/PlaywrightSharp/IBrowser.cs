@@ -60,11 +60,15 @@ namespace PlaywrightSharp
         /// <param name="ignoreHTTPSErrors"> Whether to ignore HTTPS errors during navigation. Defaults to false.</param>
         /// <param name="colorScheme">Emulates 'prefers-colors-scheme' media feature.</param>
         /// <param name="locale">Specify user locale, for example en-GB, de-DE, etc. Locale will affect navigator.language value, Accept-Language request header value as well as number and date formatting rules.</param>
-        /// <param name="extraHttpHeaders">An object containing additional HTTP headers to be sent with every request.</param>
-        /// <param name="videosPath">Enables video recording for all pages to videosPath folder. If not specified, videos are not recorded.</param>
-        /// <param name="videoSize">Specifies dimensions of the automatically recorded video. Can only be used if <paramref name="videosPath"/> is set.
-        /// If not specified the size will be equal to viewport. If viewport is not configured explicitly the video size defaults to 1280x720.
-        /// Actual picture of the page will be scaled down if necessary to fit specified size.</param>
+        /// <param name="extraHTTPHeaders">An object containing additional HTTP headers to be sent with every request.</param>
+        /// <param name="recordHar">Enables HAR recording for all pages into recordHar.path file. If not specified, the HAR is not recorded.
+        /// Make sure to await <see cref="IPage.CloseAsync(bool)"/> for the HAR to be saved.
+        /// You can use <see cref="Har.HarResult"/> to deserialize the generated JSON file.</param>
+        /// <param name="recordVideo">Enables video recording for all pages into recordVideo.dir directory. If not specified videos are not recorded.
+        /// Make sure to await <seealso cref="BrowserContext.CloseAsync"/> for videos to be saved.</param>
+        /// <param name="proxy">Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this option to work. If all contexts override the proxy, global proxy will be never used and can be any string.</param>
+        /// <param name="storageStatePath">Path to the file with saved storage.</param>
+        /// <param name="storageState">Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via <see cref="IBrowserContext.GetStorageStateAsync(string)"/>.</param>
         /// <example>.
         /// <code>
         /// <![CDATA[
@@ -93,9 +97,12 @@ namespace PlaywrightSharp
             bool? ignoreHTTPSErrors = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
-            string videosPath = null,
-            ViewportSize videoSize = null);
+            Dictionary<string, string> extraHTTPHeaders = null,
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null,
+            ProxySettings proxy = null,
+            string storageStatePath = null,
+            StorageState storageState = null);
 
         /// <summary>
         /// Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -115,11 +122,15 @@ namespace PlaywrightSharp
         /// <param name="ignoreHTTPSErrors"> Whether to ignore HTTPS errors during navigation. Defaults to false.</param>
         /// <param name="colorScheme">Emulates 'prefers-colors-scheme' media feature.</param>
         /// <param name="locale">Specify user locale, for example en-GB, de-DE, etc. Locale will affect navigator.language value, Accept-Language request header value as well as number and date formatting rules.</param>
-        /// <param name="extraHttpHeaders">An object containing additional HTTP headers to be sent with every request.</param>
-        /// <param name="videosPath">Enables video recording for all pages to videosPath folder. If not specified, videos are not recorded.</param>
-        /// <param name="videoSize">Specifies dimensions of the automatically recorded video. Can only be used if <paramref name="videosPath"/> is set.
-        /// If not specified the size will be equal to viewport. If viewport is not configured explicitly the video size defaults to 1280x720.
-        /// Actual picture of the page will be scaled down if necessary to fit specified size.</param>
+        /// <param name="extraHTTPHeaders">An object containing additional HTTP headers to be sent with every request.</param>
+        /// <param name="recordHar">Enables HAR recording for all pages into recordHar.path file. If not specified, the HAR is not recorded.
+        /// Make sure to await <see cref="IPage.CloseAsync(bool)"/> for the HAR to be saved.
+        /// You can use <see cref="Har.HarResult"/> to deserialize the generated JSON file.</param>
+        /// <param name="recordVideo">Enables video recording for all pages into recordVideo.dir directory. If not specified videos are not recorded.
+        /// Make sure to await <seealso cref="BrowserContext.CloseAsync"/> for videos to be saved.</param>
+        /// <param name="proxy">Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this option to work. If all contexts override the proxy, global proxy will be never used and can be any string.</param>
+        /// <param name="storageStatePath">Path to the file with saved storage.</param>
+        /// <param name="storageState">Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via <see cref="IBrowserContext.GetStorageStateAsync(string)"/>.</param>
         /// <example>.
         /// <code>
         /// <![CDATA[
@@ -147,9 +158,12 @@ namespace PlaywrightSharp
             bool? ignoreHTTPSErrors = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
-            string videosPath = null,
-            ViewportSize videoSize = null);
+            Dictionary<string, string> extraHTTPHeaders = null,
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null,
+            ProxySettings proxy = null,
+            string storageStatePath = null,
+            StorageState storageState = null);
 
         /// <summary>
         /// Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -187,11 +201,15 @@ namespace PlaywrightSharp
         /// <param name="ignoreHTTPSErrors"> Whether to ignore HTTPS errors during navigation. Defaults to false.</param>
         /// <param name="colorScheme">Emulates 'prefers-colors-scheme' media feature.</param>
         /// <param name="locale">Specify user locale, for example en-GB, de-DE, etc. Locale will affect navigator.language value, Accept-Language request header value as well as number and date formatting rules.</param>
-        /// <param name="extraHttpHeaders">An object containing additional HTTP headers to be sent with every request.</param>
-        /// <param name="videosPath">Enables video recording for all pages to videosPath folder. If not specified, videos are not recorded.</param>
-        /// <param name="videoSize">Specifies dimensions of the automatically recorded video. Can only be used if <paramref name="videosPath"/> is set.
-        /// If not specified the size will be equal to viewport. If viewport is not configured explicitly the video size defaults to 1280x720.
-        /// Actual picture of the page will be scaled down if necessary to fit specified size.</param>
+        /// <param name="extraHTTPHeaders">An object containing additional HTTP headers to be sent with every request.</param>
+        /// <param name="recordHar">Enables HAR recording for all pages into recordHar.path file. If not specified, the HAR is not recorded.
+        /// Make sure to await <see cref="IPage.CloseAsync(bool)"/> for the HAR to be saved.
+        /// You can use <see cref="Har.HarResult"/> to deserialize the generated JSON file.</param>
+        /// <param name="recordVideo">Enables video recording for all pages into recordVideo.dir directory. If not specified videos are not recorded.
+        /// Make sure to await <seealso cref="BrowserContext.CloseAsync"/> for videos to be saved.</param>
+        /// <param name="proxy">Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this option to work. If all contexts override the proxy, global proxy will be never used and can be any string.</param>
+        /// <param name="storageStatePath">Path to the file with saved storage.</param>
+        /// <param name="storageState">Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via <see cref="IBrowserContext.GetStorageStateAsync(string)"/>.</param>
         /// <example>.
         /// <code>
         /// <![CDATA[
@@ -220,9 +238,12 @@ namespace PlaywrightSharp
             bool? ignoreHTTPSErrors = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
-            string videosPath = null,
-            ViewportSize videoSize = null);
+            Dictionary<string, string> extraHTTPHeaders = null,
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null,
+            ProxySettings proxy = null,
+            string storageStatePath = null,
+            StorageState storageState = null);
 
         /// <summary>
         /// Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -242,11 +263,15 @@ namespace PlaywrightSharp
         /// <param name="ignoreHTTPSErrors"> Whether to ignore HTTPS errors during navigation. Defaults to false.</param>
         /// <param name="colorScheme">Emulates 'prefers-colors-scheme' media feature.</param>
         /// <param name="locale">Specify user locale, for example en-GB, de-DE, etc. Locale will affect navigator.language value, Accept-Language request header value as well as number and date formatting rules.</param>
-        /// <param name="extraHttpHeaders">An object containing additional HTTP headers to be sent with every request.</param>
-        /// <param name="videosPath">Enables video recording for all pages to videosPath folder. If not specified, videos are not recorded.</param>
-        /// <param name="videoSize">Specifies dimensions of the automatically recorded video. Can only be used if <paramref name="videosPath"/> is set.
-        /// If not specified the size will be equal to viewport. If viewport is not configured explicitly the video size defaults to 1280x720.
-        /// Actual picture of the page will be scaled down if necessary to fit specified size.</param>
+        /// <param name="extraHTTPHeaders">An object containing additional HTTP headers to be sent with every request.</param>
+        /// <param name="recordHar">Enables HAR recording for all pages into recordHar.path file. If not specified, the HAR is not recorded.
+        /// Make sure to await <see cref="IPage.CloseAsync(bool)"/> for the HAR to be saved.
+        /// You can use <see cref="Har.HarResult"/> to deserialize the generated JSON file.</param>
+        /// <param name="recordVideo">Enables video recording for all pages into recordVideo.dir directory. If not specified videos are not recorded.
+        /// Make sure to await <seealso cref="BrowserContext.CloseAsync"/> for videos to be saved.</param>
+        /// <param name="proxy">Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this option to work. If all contexts override the proxy, global proxy will be never used and can be any string.</param>
+        /// <param name="storageStatePath">Path to the file with saved storage.</param>
+        /// <param name="storageState">Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via <see cref="IBrowserContext.GetStorageStateAsync(string)"/>.</param>
         /// <example>.
         /// <code>
         /// <![CDATA[
@@ -274,9 +299,12 @@ namespace PlaywrightSharp
             bool? ignoreHTTPSErrors = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
-            string videosPath = null,
-            ViewportSize videoSize = null);
+            Dictionary<string, string> extraHTTPHeaders = null,
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null,
+            ProxySettings proxy = null,
+            string storageStatePath = null,
+            StorageState storageState = null);
 
         /// <summary>
         /// Creates a new page in a new browser context. Closing this page will close the context as well.

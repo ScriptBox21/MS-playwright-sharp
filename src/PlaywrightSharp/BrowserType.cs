@@ -59,8 +59,8 @@ namespace PlaywrightSharp
             int? timeout = null,
             bool? dumpIO = null,
             int? slowMo = null,
-            bool? ignoreDefaultArgs = null,
-            string[] ignoredDefaultArgs = null,
+            bool? ignoreAllDefaultArgs = null,
+            string[] ignoreDefaultArgs = null,
             Dictionary<string, string> env = null,
             Dictionary<string, object> firefoxUserPrefs = null,
             ProxySettings proxy = null,
@@ -80,8 +80,8 @@ namespace PlaywrightSharp
                 Timeout = timeout,
                 DumpIO = dumpIO,
                 SlowMo = slowMo,
+                IgnoreAllDefaultArgs = ignoreAllDefaultArgs,
                 IgnoreDefaultArgs = ignoreDefaultArgs,
-                IgnoredDefaultArgs = ignoredDefaultArgs,
                 Env = env,
                 FirefoxUserPrefs = firefoxUserPrefs,
                 Proxy = proxy,
@@ -115,10 +115,9 @@ namespace PlaywrightSharp
             int? timeout = null,
             bool? dumpIO = null,
             int? slowMo = null,
-            bool? ignoreDefaultArgs = null,
-            string[] ignoredDefaultArgs = null,
+            bool? ignoreAllDefaultArgs = null,
+            string[] ignoreDefaultArgs = null,
             Dictionary<string, string> env = null,
-            Dictionary<string, object> firefoxUserPrefs = null,
             ProxySettings proxy = null,
             string userAgent = null,
             bool? bypassCSP = null,
@@ -134,13 +133,13 @@ namespace PlaywrightSharp
             bool? acceptDownloads = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
+            Dictionary<string, string> extraHTTPHeaders = null,
             bool? chromiumSandbox = null,
             bool? handleSIGINT = null,
             bool? handleSIGTERM = null,
             bool? handleSIGHUP = null,
-            string videosPath = null,
-            ViewportSize videoSize = null)
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null)
             => LaunchPersistentContextAsync(
                 userDataDir,
                 new LaunchPersistentOptions
@@ -155,10 +154,9 @@ namespace PlaywrightSharp
                     Timeout = timeout,
                     DumpIO = dumpIO,
                     SlowMo = slowMo,
+                    IgnoreAllDefaultArgs = ignoreAllDefaultArgs,
                     IgnoreDefaultArgs = ignoreDefaultArgs,
-                    IgnoredDefaultArgs = ignoredDefaultArgs,
                     Env = env,
-                    FirefoxUserPrefs = firefoxUserPrefs,
                     Proxy = proxy,
                     Viewport = viewport,
                     UserAgent = userAgent,
@@ -175,13 +173,13 @@ namespace PlaywrightSharp
                     AcceptDownloads = acceptDownloads,
                     ColorScheme = colorScheme,
                     Locale = locale,
-                    ExtraHttpHeaders = extraHttpHeaders,
+                    ExtraHTTPHeaders = extraHTTPHeaders,
                     ChromiumSandbox = chromiumSandbox,
                     HandleSIGHUP = handleSIGHUP,
                     HandleSIGINT = handleSIGINT,
                     HandleSIGTERM = handleSIGTERM,
-                    VideosPath = videosPath,
-                    VideoSize = videoSize,
+                    RecordHar = recordHar,
+                    RecordVideo = recordVideo,
                 });
 
         /// <inheritdoc />
@@ -196,10 +194,9 @@ namespace PlaywrightSharp
             int? timeout = null,
             bool? dumpIO = null,
             int? slowMo = null,
-            bool? ignoreDefaultArgs = null,
-            string[] ignoredDefaultArgs = null,
+            bool? ignoreAllDefaultArgs = null,
+            string[] ignoreDefaultArgs = null,
             Dictionary<string, string> env = null,
-            Dictionary<string, object> firefoxUserPrefs = null,
             ProxySettings proxy = null,
             string userAgent = null,
             bool? bypassCSP = null,
@@ -215,13 +212,13 @@ namespace PlaywrightSharp
             bool? acceptDownloads = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
+            Dictionary<string, string> extraHTTPHeaders = null,
             bool? chromiumSandbox = null,
             bool? handleSIGINT = null,
             bool? handleSIGTERM = null,
             bool? handleSIGHUP = null,
-            string videosPath = null,
-            ViewportSize videoSize = null)
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null)
             => LaunchPersistentContextAsync(
                 userDataDir,
                 new LaunchPersistentOptions
@@ -236,10 +233,9 @@ namespace PlaywrightSharp
                     Timeout = timeout,
                     DumpIO = dumpIO,
                     SlowMo = slowMo,
+                    IgnoreAllDefaultArgs = ignoreAllDefaultArgs,
                     IgnoreDefaultArgs = ignoreDefaultArgs,
-                    IgnoredDefaultArgs = ignoredDefaultArgs,
                     Env = env,
-                    FirefoxUserPrefs = firefoxUserPrefs,
                     Proxy = proxy,
                     UserAgent = userAgent,
                     BypassCSP = bypassCSP,
@@ -255,18 +251,25 @@ namespace PlaywrightSharp
                     AcceptDownloads = acceptDownloads,
                     ColorScheme = colorScheme,
                     Locale = locale,
-                    ExtraHttpHeaders = extraHttpHeaders,
+                    ExtraHTTPHeaders = extraHTTPHeaders,
                     ChromiumSandbox = chromiumSandbox,
                     HandleSIGHUP = handleSIGHUP,
                     HandleSIGINT = handleSIGINT,
                     HandleSIGTERM = handleSIGTERM,
-                    VideosPath = videosPath,
-                    VideoSize = videoSize,
+                    RecordHar = recordHar,
+                    RecordVideo = recordVideo,
                 });
 
         /// <inheritdoc />
         public Task<IBrowserContext> LaunchPersistentContextAsync(string userDataDir, LaunchOptions options)
-            => LaunchPersistentContextAsync(userDataDir, options?.ToPersistentOptions() ?? new LaunchPersistentOptions());
+        {
+            if (options?.FirefoxUserPrefs != null)
+            {
+                throw new ArgumentException($"{nameof(LaunchOptions.FirefoxUserPrefs)} option is not supported in LaunchPersistentContextAsync.");
+            }
+
+            return LaunchPersistentContextAsync(userDataDir, options?.ToPersistentOptions() ?? new LaunchPersistentOptions());
+        }
 
         /// <inheritdoc />
         public async Task<IBrowserContext> LaunchPersistentContextAsync(string userDataDir, LaunchPersistentOptions options)

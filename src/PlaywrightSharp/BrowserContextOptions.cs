@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
+using PlaywrightSharp.Helpers;
 using PlaywrightSharp.Transport.Protocol;
 
 namespace PlaywrightSharp
@@ -106,19 +109,35 @@ namespace PlaywrightSharp
         /// <summary>
         /// An object containing additional HTTP headers to be sent with every request.
         /// </summary>
-        public Dictionary<string, string> ExtraHttpHeaders { get; set; }
+        public Dictionary<string, string> ExtraHTTPHeaders { get; set; }
 
         /// <summary>
-        /// Enables video recording for all pages to videosPath folder. If not specified, videos are not recorded.
+        /// Enables HAR recording for all pages into recordHar.path file. If not specified, the HAR is not recorded.
+        /// Make sure to await <see cref="IPage.CloseAsync(bool)"/> for the HAR to be saved.
+        /// You can use <see cref="Har.HarResult"/> to deserialize the generated JSON file.
         /// </summary>
-        public string VideosPath { get; set; }
+        public RecordHarOptions RecordHar { get; set; }
 
         /// <summary>
-        /// Specifies dimensions of the automatically recorded video. Can only be used if <see cref="VideosPath"/> is set.
-        /// If not specified the size will be equal to viewport. If viewport is not configured explicitly the video size defaults to 1280x720.
-        /// Actual picture of the page will be scaled down if necessary to fit specified size.
+        /// Enables video recording for all pages into recordVideo.dir directory. If not specified videos are not recorded.
+        /// Make sure to await <seealso cref="BrowserContext.CloseAsync"/> for videos to be saved.
         /// </summary>
-        public ViewportSize VideoSize { get; set; }
+        public RecordVideoOptions RecordVideo { get; set; }
+
+        /// <summary>
+        /// Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this option to work. If all contexts override the proxy, global proxy will be never used and can be any string..
+        /// </summary>
+        public ProxySettings Proxy { get; set; }
+
+        /// <summary>
+        /// Path to the file with saved storage.
+        /// </summary>
+        public string StorageStatePath { get; set; }
+
+        /// <summary>
+        /// Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via <see cref="IBrowserContext.GetStorageStateAsync(string)"/>.
+        /// </summary>
+        public StorageState StorageState { get; set; }
 
         /// <summary>
         /// Clones the <see cref="BrowserContextOptions"/>.
@@ -128,7 +147,6 @@ namespace PlaywrightSharp
         {
             var copy = (BrowserContextOptions)MemberwiseClone();
             copy.Viewport = Viewport?.Clone();
-            copy.VideoSize = VideoSize?.Clone();
             copy.Geolocation = Geolocation?.Clone();
             return copy;
         }
@@ -221,19 +239,34 @@ namespace PlaywrightSharp
                 args["locale"] = Locale;
             }
 
-            if (ExtraHttpHeaders != null)
+            if (ExtraHTTPHeaders != null)
             {
-                args["extraHTTPHeaders"] = ExtraHttpHeaders.Select(kv => new HeaderEntry { Name = kv.Key, Value = kv.Value }).ToArray();
+                args["extraHTTPHeaders"] = ExtraHTTPHeaders.Select(kv => new HeaderEntry { Name = kv.Key, Value = kv.Value }).ToArray();
             }
 
-            if (VideosPath != null)
+            if (RecordHar != null)
             {
-                args["videosPath"] = VideosPath;
+                args["recordHar"] = RecordHar;
             }
 
-            if (VideoSize != null)
+            if (RecordVideo != null)
             {
-                args["videoSize"] = VideoSize;
+                args["recordVideo"] = RecordVideo;
+            }
+
+            if (Proxy != null)
+            {
+                args["proxy"] = Proxy;
+            }
+
+            if (!string.IsNullOrEmpty(StorageStatePath))
+            {
+                StorageState = JsonSerializer.Deserialize<StorageState>(File.ReadAllText(StorageStatePath), JsonExtensions.DefaultJsonSerializerOptions);
+            }
+
+            if (StorageState != null)
+            {
+                args["storageState"] = StorageState;
             }
 
             return args;

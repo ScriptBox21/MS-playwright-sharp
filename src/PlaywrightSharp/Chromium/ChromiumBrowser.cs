@@ -50,9 +50,12 @@ namespace PlaywrightSharp.Chromium
             bool? ignoreHTTPSErrors = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
-            string videosPath = null,
-            ViewportSize videoSize = null)
+            Dictionary<string, string> extraHTTPHeaders = null,
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null,
+            ProxySettings proxy = null,
+            string storageStatePath = null,
+            StorageState storageState = null)
             => await base.NewContextAsync(
                 viewport,
                 userAgent,
@@ -70,7 +73,12 @@ namespace PlaywrightSharp.Chromium
                 ignoreHTTPSErrors,
                 colorScheme,
                 locale,
-                extraHttpHeaders).ConfigureAwait(false) as IChromiumBrowserContext;
+                extraHTTPHeaders,
+                recordHar,
+                recordVideo,
+                proxy,
+                storageStatePath,
+                storageState).ConfigureAwait(false) as IChromiumBrowserContext;
 
         /// <inheritdoc/>
         public new async Task<IChromiumBrowserContext> NewContextAsync(
@@ -89,9 +97,12 @@ namespace PlaywrightSharp.Chromium
             bool? ignoreHTTPSErrors = null,
             ColorScheme? colorScheme = null,
             string locale = null,
-            Dictionary<string, string> extraHttpHeaders = null,
-            string videosPath = null,
-            ViewportSize videoSize = null)
+            Dictionary<string, string> extraHTTPHeaders = null,
+            RecordHarOptions recordHar = null,
+            RecordVideoOptions recordVideo = null,
+            ProxySettings proxy = null,
+            string storageStatePath = null,
+            StorageState storageState = null)
             => await base.NewContextAsync(
                 userAgent,
                 bypassCSP,
@@ -108,7 +119,12 @@ namespace PlaywrightSharp.Chromium
                 ignoreHTTPSErrors,
                 colorScheme,
                 locale,
-                extraHttpHeaders).ConfigureAwait(false) as IChromiumBrowserContext;
+                extraHTTPHeaders,
+                recordHar,
+                recordVideo,
+                proxy,
+                storageStatePath,
+                storageState).ConfigureAwait(false) as IChromiumBrowserContext;
 
         /// <inheritdoc/>
         public new async Task<IChromiumBrowserContext> NewContextAsync(BrowserContextOptions options)

@@ -1,3 +1,28 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2020 Darío Kondratiuk
+ * Copyright (c) 2020 Meir Blachman
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -30,18 +55,22 @@ namespace PlaywrightSharp
             Url = _initializer.Url;
             Name = _initializer.Name;
             ParentFrame = _initializer.ParentFrame;
+            _loadStates = initializer.LoadStates;
 
             _channel.LoadState += (sender, e) =>
             {
-                if (e.Add.HasValue)
+                lock (_loadStates)
                 {
-                    _loadStates.Add(e.Add.Value);
-                    LoadState?.Invoke(this, new LoadStateEventArgs { LifecycleEvent = e.Add.Value });
-                }
+                    if (e.Add.HasValue)
+                    {
+                        _loadStates.Add(e.Add.Value);
+                        LoadState?.Invoke(this, new LoadStateEventArgs { LifecycleEvent = e.Add.Value });
+                    }
 
-                if (e.Remove.HasValue)
-                {
-                    _loadStates.Remove(e.Remove.Value);
+                    if (e.Remove.HasValue)
+                    {
+                        _loadStates.Remove(e.Remove.Value);
+                    }
                 }
             };
 
@@ -343,17 +372,32 @@ namespace PlaywrightSharp
         /// <inheritdoc />
         public async Task WaitForLoadStateAsync(LifecycleEvent state = LifecycleEvent.Load, int? timeout = null)
         {
-            if (_loadStates.Contains(state))
-            {
-                return;
-            }
+            Task<LoadStateEventArgs> task;
+            Waiter waiter = null;
 
-            using var waiter = SetupNavigationWaiter(timeout);
-            await waiter.WaitForEventAsync<LoadStateEventArgs>(this, "LoadState", s =>
+            try
             {
-                waiter.Log($"  \"{s}\" event fired");
-                return s.LifecycleEvent == state;
-            }).ConfigureAwait(false);
+                lock (_loadStates)
+                {
+                    if (_loadStates.Contains(state))
+                    {
+                        return;
+                    }
+
+                    waiter = SetupNavigationWaiter(timeout);
+                    task = waiter.WaitForEventAsync<LoadStateEventArgs>(this, "LoadState", s =>
+                    {
+                        waiter.Log($"  \"{s}\" event fired");
+                        return s.LifecycleEvent == state;
+                    });
+                }
+
+                await task.ConfigureAwait(false);
+            }
+            finally
+            {
+                waiter?.Dispose();
+            }
         }
 
         /// <inheritdoc />
@@ -375,6 +419,31 @@ namespace PlaywrightSharp
         /// <inheritdoc />
         public Task<string> GetTextContentAsync(string selector, int? timeout = null)
             => GetTextContentAsync(false, selector, timeout);
+
+        /// <inheritdoc />
+        public Task TapAsync(string selector, Modifier[] modifiers = null, Point? position = null, int? timeout = null, bool force = false, bool? noWaitAfter = null)
+            => TapAsync(false, selector, modifiers, position, timeout, force, noWaitAfter);
+
+        /// <inheritdoc />
+        public Task<bool> IsCheckedAsync(string selector, int? timeout = null) => IsCheckedAsync(false, selector, timeout);
+
+        /// <inheritdoc />
+        public Task<bool> IsDisabledAsync(string selector, int? timeout = null) => IsDisabledAsync(false, selector, timeout);
+
+        /// <inheritdoc />
+        public Task<bool> IsEditableAsync(string selector, int? timeout = null) => IsEditableAsync(false, selector, timeout);
+
+        /// <inheritdoc />
+        public Task<bool> IsEnabledAsync(string selector, int? timeout = null) => IsEnabledAsync(false, selector, timeout);
+
+        /// <inheritdoc />
+        public Task<bool> IsHiddenAsync(string selector, int? timeout = null) => IsHiddenAsync(false, selector, timeout);
+
+        /// <inheritdoc />
+        public Task<bool> IsVisibleAsync(string selector, int? timeout = null) => IsVisibleAsync(false, selector, timeout);
+
+        internal Task TapAsync(bool isPageCall, string selector, Modifier[] modifiers = null, Point? position = null, int? timeout = null, bool force = false, bool? noWaitAfter = null)
+            => _channel.TapAsync(selector, modifiers, position, timeout, force, noWaitAfter, isPageCall);
 
         internal async Task<IResponse> WaitForNavigationAsync(
             LifecycleEvent? waitUntil = null,
@@ -424,7 +493,7 @@ namespace PlaywrightSharp
                     }).ConfigureAwait(false);
             }
 
-            var request = navigatedEvent.NewDocument != null ? navigatedEvent.NewDocument?.Request?.Object : null;
+            var request = navigatedEvent.NewDocument?.Request?.Object;
             var response = request != null
                 ? await waiter.WaitForPromiseAsync(request.FinalRequest.GetResponseAsync()).ConfigureAwait(false)
                 : null;
@@ -690,6 +759,24 @@ namespace PlaywrightSharp
 
         internal async Task<IResponse> GoToAsync(bool isPage, string url, LifecycleEvent? waitUntil, string referer, int? timeout)
             => (await _channel.GoToAsync(url, timeout, waitUntil, referer, isPage).ConfigureAwait(false))?.Object;
+
+        internal Task<bool> IsCheckedAsync(bool isPageCall, string selector, int? timeout = null)
+            => _channel.IsCheckedAsync(selector, timeout, isPageCall);
+
+        internal Task<bool> IsDisabledAsync(bool isPageCall, string selector, int? timeout = null)
+            => _channel.IsDisabledAsync(selector, timeout, isPageCall);
+
+        internal Task<bool> IsEditableAsync(bool isPageCall, string selector, int? timeout = null)
+            => _channel.IsEditableAsync(selector, timeout, isPageCall);
+
+        internal Task<bool> IsEnabledAsync(bool isPageCall, string selector, int? timeout = null)
+            => _channel.IsEnabledAsync(selector, timeout, isPageCall);
+
+        internal Task<bool> IsHiddenAsync(bool isPageCall, string selector, int? timeout = null)
+            => _channel.IsHiddenAsync(selector, timeout, isPageCall);
+
+        internal Task<bool> IsVisibleAsync(bool isPageCall, string selector, int? timeout = null)
+            => _channel.IsVisibleAsync(selector, timeout, isPageCall);
 
         private Waiter SetupNavigationWaiter(int? timeout)
         {

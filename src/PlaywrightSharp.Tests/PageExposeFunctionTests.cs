@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Threading.Tasks;
 using PlaywrightSharp.Tests.BaseTests;
+using PlaywrightSharp.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -15,9 +16,8 @@ namespace PlaywrightSharp.Tests
         {
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>exposeBinding should work</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "exposeBinding should work")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ExposeBindingShouldWork()
         {
             BindingSource bindingSource = null;
@@ -36,9 +36,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(11, result);
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should work</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "should work")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWork()
         {
             await Page.ExposeFunctionAsync("compute", (int a, int b) => a * b);
@@ -48,9 +47,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(36, result);
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should work with handles and complex objects</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "should work with handles and complex objects")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithHandlesAndComplexObjects()
         {
             var fooHandle = await Page.EvaluateHandleAsync(@"() => {
@@ -67,9 +65,8 @@ namespace PlaywrightSharp.Tests
             }"));
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should throw exception in page context</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "should throw exception in page context")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldThrowExceptionInPageContext()
         {
             await Page.ExposeFunctionAsync("woof", () =>
@@ -90,16 +87,14 @@ namespace PlaywrightSharp.Tests
             Assert.Contains(nameof(PageExposeFunctionTests), result.GetProperty("stack").GetString());
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should support throwing "null"</playwright-it>
+        [PlaywrightTest("page-expose-function.spec.ts", @"should support throwing ""null""")]
         [Fact(Skip = "Not relevant for C#, js specific")]
         public void ShouldSupportThrowingNull()
         {
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should be callable from-inside addInitScript</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "should be callable from-inside addInitScript")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldBeCallableFromInsideAddInitScript()
         {
             bool called = false;
@@ -112,9 +107,8 @@ namespace PlaywrightSharp.Tests
             Assert.True(called);
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should survive navigation</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "should survive navigation")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldSurviveNavigation()
         {
             await Page.ExposeFunctionAsync("compute", (int a, int b) => a * b);
@@ -125,9 +119,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(36, result);
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should await returned promise</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "should await returned promise")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldAwaitReturnedPromise()
         {
             await Page.ExposeFunctionAsync("compute", (int a, int b) => Task.FromResult(a * b));
@@ -137,9 +130,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(15, result);
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should work on frames</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "should work on frames")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkOnFrames()
         {
             await Page.ExposeFunctionAsync("compute", (int a, int b) => Task.FromResult(a * b));
@@ -151,9 +143,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(15, result);
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should work on frames before navigation</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "should work on frames before navigation")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkOnFramesBeforeNavigation()
         {
             await Page.GoToAsync(TestConstants.ServerUrl + "/frames/nested-frames.html");
@@ -165,9 +156,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(15, result);
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should work after cross origin navigation</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "should work after cross origin navigation")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkAfterCrossOriginNavigation()
         {
             await Page.GoToAsync(TestConstants.EmptyPage);
@@ -179,9 +169,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(36, result);
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should work with complex objects</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "should work with complex objects")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithComplexObjects()
         {
             await Page.ExposeFunctionAsync("complexObject", (ComplexObject a, ComplexObject b) =>
@@ -192,9 +181,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(7, result.x);
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>exposeBindingHandle should work</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "exposeBindingHandle should work")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ExposeBindingHandleShouldWork()
         {
             IJSHandle target = null;
@@ -214,9 +202,8 @@ namespace PlaywrightSharp.Tests
             Assert.Equal(17, result);
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>exposeBindingHandle should not throw during navigation</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("page-expose-function.spec.ts", "exposeBindingHandle should not throw during navigation")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ExposeBindingHandleShouldNotThrowDuringNavigation()
         {
             IJSHandle target = null;
@@ -229,16 +216,15 @@ namespace PlaywrightSharp.Tests
                 });
 
             await TaskUtils.WhenAll(
+                Page.WaitForNavigationAsync(LifecycleEvent.Load),
                 Page.EvaluateAsync(@"async url => {
                     window['logme']({ foo: 42 });
                     window.location.href = url;
-                }", TestConstants.ServerUrl + "/one-style.html"),
-                Page.WaitForNavigationAsync(LifecycleEvent.Load));
+                }", TestConstants.ServerUrl + "/one-style.html"));
         }
 
-        ///<playwright-file>browsercontext-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>should throw for duplicate registrations</playwright-it>
-        [Fact(Timeout = PlaywrightSharp.Playwright.DefaultTimeout)]
+        [PlaywrightTest("browsercontext-expose-function.spec.ts", "should throw for duplicate registrations")]
+        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
         public async Task ShouldThrowForDuplicateRegistrations()
         {
             await Page.ExposeFunctionAsync("foo", () => { });
@@ -246,8 +232,7 @@ namespace PlaywrightSharp.Tests
             Assert.Equal("Function \"foo\" has been already registered", exception.Message);
         }
 
-        ///<playwright-file>page-expose-function.spec.ts</playwright-file>
-        ///<playwright-it>exposeBindingHandle should throw for multiple arguments</playwright-it>
+        [PlaywrightTest("page-expose-function.spec.ts", "exposeBindingHandle should throw for multiple arguments")]
         [Fact(Skip = "Not relevant for C#, js specific")]
         public void ExposeBindingHandleShouldThrowForMultipleArguments()
         {

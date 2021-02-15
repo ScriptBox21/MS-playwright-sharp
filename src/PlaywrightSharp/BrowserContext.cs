@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -15,12 +16,11 @@ namespace PlaywrightSharp
     /// <inheritdoc cref="IBrowserContext" />
     public class BrowserContext : ChannelOwnerBase, IChannelOwner<BrowserContext>, IBrowserContext
     {
-        private readonly TaskCompletionSource<bool> _closeTcs = new TaskCompletionSource<bool>();
-        private readonly List<(IEvent contextEvent, TaskCompletionSource<bool> waitTcs)> _waitForCancellationTcs = new List<(IEvent contextEvent, TaskCompletionSource<bool> waitTcs)>();
-        private readonly TimeoutSettings _timeoutSettings = new TimeoutSettings();
-        private readonly Dictionary<string, Delegate> _bindings = new Dictionary<string, Delegate>();
+        private readonly TaskCompletionSource<bool> _closeTcs = new();
+        private readonly List<(IEvent ContextEvent, TaskCompletionSource<bool> WaitTcs)> _waitForCancellationTcs = new();
+        private readonly Dictionary<string, Delegate> _bindings = new();
         private readonly BrowserContextInitializer _initializer;
-        private List<RouteSetting> _routes = new List<RouteSetting>();
+        private List<RouteSetting> _routes = new();
 
         private bool _isClosedOrClosing;
 
@@ -40,7 +40,7 @@ namespace PlaywrightSharp
                 {
                     var page = ((PageChannel)pageChannel).Object;
                     PagesList.Add(page);
-                    page.BrowserContext = this;
+                    page.Context = this;
                 }
             }
         }
@@ -66,10 +66,10 @@ namespace PlaywrightSharp
         /// <inheritdoc />
         public int DefaultTimeout
         {
-            get => _timeoutSettings.Timeout;
+            get => TimeoutSettings.Timeout;
             set
             {
-                _timeoutSettings.SetDefaultTimeout(value);
+                TimeoutSettings.SetDefaultTimeout(value);
                 _ = Channel.SetDefaultTimeoutNoReplyAsync(value);
             }
         }
@@ -77,10 +77,10 @@ namespace PlaywrightSharp
         /// <inheritdoc />
         public int DefaultNavigationTimeout
         {
-            get => _timeoutSettings.NavigationTimeout;
+            get => TimeoutSettings.NavigationTimeout;
             set
             {
-                _timeoutSettings.SetDefaultNavigationTimeout(value);
+                TimeoutSettings.SetDefaultNavigationTimeout(value);
                 _ = Channel.SetDefaultNavigationTimeoutNoReplyAsync(value);
             }
         }
@@ -93,9 +93,11 @@ namespace PlaywrightSharp
 
         internal List<Worker> ServiceWorkersList { get; } = new List<Worker>();
 
-        internal string BrowserName => _initializer.BrowserName;
+        internal bool IsChromium => _initializer.IsChromium;
 
         internal BrowserContextOptions Options { get; set; }
+
+        internal TimeoutSettings TimeoutSettings { get; } = new();
 
         /// <inheritdoc />
         public async Task<IPage> NewPageAsync(string url = null)
@@ -109,15 +111,23 @@ namespace PlaywrightSharp
         }
 
         /// <inheritdoc />
-        public Task CloseAsync()
+        public async Task CloseAsync()
         {
-            if (!_isClosedOrClosing)
+            try
             {
-                _isClosedOrClosing = true;
-                return Task.WhenAny(_closeTcs.Task, Channel.CloseAsync());
-            }
+                if (!_isClosedOrClosing)
+                {
+                    _isClosedOrClosing = true;
+                    await Channel.CloseAsync().ConfigureAwait(false);
+                    await _closeTcs.Task.ConfigureAwait(false);
+                }
 
-            return _closeTcs.Task;
+                await _closeTcs.Task.ConfigureAwait(false);
+            }
+            catch (Exception e) when (IsSafeCloseException(e))
+            {
+                // Swallow exception
+            }
         }
 
         /// <inheritdoc />
@@ -152,64 +162,64 @@ namespace PlaywrightSharp
         public async ValueTask DisposeAsync() => await CloseAsync().ConfigureAwait(false);
 
         /// <inheritdoc/>
-        public Task ExposeBindingAsync(string name, Action<BindingSource> playwrightBinding)
-            => ExposeBindingAsync(name, (Delegate)playwrightBinding);
+        public Task ExposeBindingAsync(string name, Action<BindingSource> callback)
+            => ExposeBindingAsync(name, (Delegate)callback);
 
         /// <inheritdoc/>
-        public Task ExposeBindingAsync<T>(string name, Action<BindingSource, T> playwrightBinding)
-            => ExposeBindingAsync(name, (Delegate)playwrightBinding);
+        public Task ExposeBindingAsync<T>(string name, Action<BindingSource, T> callback)
+            => ExposeBindingAsync(name, (Delegate)callback);
 
         /// <inheritdoc/>
-        public Task ExposeBindingAsync<TResult>(string name, Func<BindingSource, TResult> playwrightBinding)
-            => ExposeBindingAsync(name, (Delegate)playwrightBinding);
+        public Task ExposeBindingAsync<TResult>(string name, Func<BindingSource, TResult> callback)
+            => ExposeBindingAsync(name, (Delegate)callback);
 
         /// <inheritdoc/>
-        public Task ExposeBindingAsync<TResult>(string name, Func<BindingSource, IJSHandle, TResult> playwrightBinding)
-            => ExposeBindingAsync(name, (Delegate)playwrightBinding, true);
+        public Task ExposeBindingAsync<TResult>(string name, Func<BindingSource, IJSHandle, TResult> callback)
+            => ExposeBindingAsync(name, (Delegate)callback, true);
 
         /// <inheritdoc/>
-        public Task ExposeBindingAsync<T, TResult>(string name, Func<BindingSource, T, TResult> playwrightBinding)
-            => ExposeBindingAsync(name, (Delegate)playwrightBinding);
+        public Task ExposeBindingAsync<T, TResult>(string name, Func<BindingSource, T, TResult> callback)
+            => ExposeBindingAsync(name, (Delegate)callback);
 
         /// <inheritdoc/>
-        public Task ExposeBindingAsync<T1, T2, TResult>(string name, Func<BindingSource, T1, T2, TResult> playwrightBinding)
-            => ExposeBindingAsync(name, (Delegate)playwrightBinding);
+        public Task ExposeBindingAsync<T1, T2, TResult>(string name, Func<BindingSource, T1, T2, TResult> callback)
+            => ExposeBindingAsync(name, (Delegate)callback);
 
         /// <inheritdoc/>
-        public Task ExposeBindingAsync<T1, T2, T3, TResult>(string name, Func<BindingSource, T1, T2, T3, TResult> playwrightBinding)
-            => ExposeBindingAsync(name, (Delegate)playwrightBinding);
+        public Task ExposeBindingAsync<T1, T2, T3, TResult>(string name, Func<BindingSource, T1, T2, T3, TResult> callback)
+            => ExposeBindingAsync(name, (Delegate)callback);
 
         /// <inheritdoc/>
-        public Task ExposeBindingAsync<T1, T2, T3, T4, TResult>(string name, Func<BindingSource, T1, T2, T3, T4, TResult> playwrightBinding)
-            => ExposeBindingAsync(name, (Delegate)playwrightBinding);
+        public Task ExposeBindingAsync<T1, T2, T3, T4, TResult>(string name, Func<BindingSource, T1, T2, T3, T4, TResult> callback)
+            => ExposeBindingAsync(name, (Delegate)callback);
 
         /// <inheritdoc/>
-        public Task ExposeFunctionAsync(string name, Action playwrightFunction)
-            => ExposeBindingAsync(name, (BindingSource _) => playwrightFunction());
+        public Task ExposeFunctionAsync(string name, Action callback)
+            => ExposeBindingAsync(name, (BindingSource _) => callback());
 
         /// <inheritdoc/>
-        public Task ExposeFunctionAsync<T>(string name, Action<T> playwrightFunction)
-            => ExposeBindingAsync(name, (BindingSource _, T t) => playwrightFunction(t));
+        public Task ExposeFunctionAsync<T>(string name, Action<T> callback)
+            => ExposeBindingAsync(name, (BindingSource _, T t) => callback(t));
 
         /// <inheritdoc/>
-        public Task ExposeFunctionAsync<TResult>(string name, Func<TResult> playwrightFunction)
-            => ExposeBindingAsync(name, (BindingSource _) => playwrightFunction());
+        public Task ExposeFunctionAsync<TResult>(string name, Func<TResult> callback)
+            => ExposeBindingAsync(name, (BindingSource _) => callback());
 
         /// <inheritdoc/>
-        public Task ExposeFunctionAsync<T, TResult>(string name, Func<T, TResult> playwrightFunction)
-            => ExposeBindingAsync(name, (BindingSource _, T t) => playwrightFunction(t));
+        public Task ExposeFunctionAsync<T, TResult>(string name, Func<T, TResult> callback)
+            => ExposeBindingAsync(name, (BindingSource _, T t) => callback(t));
 
         /// <inheritdoc/>
-        public Task ExposeFunctionAsync<T1, T2, TResult>(string name, Func<T1, T2, TResult> playwrightFunction)
-            => ExposeBindingAsync(name, (BindingSource _, T1 t1, T2 t2) => playwrightFunction(t1, t2));
+        public Task ExposeFunctionAsync<T1, T2, TResult>(string name, Func<T1, T2, TResult> callback)
+            => ExposeBindingAsync(name, (BindingSource _, T1 t1, T2 t2) => callback(t1, t2));
 
         /// <inheritdoc/>
-        public Task ExposeFunctionAsync<T1, T2, T3, TResult>(string name, Func<T1, T2, T3, TResult> playwrightFunction)
-            => ExposeBindingAsync(name, (BindingSource _, T1 t1, T2 t2, T3 t3) => playwrightFunction(t1, t2, t3));
+        public Task ExposeFunctionAsync<T1, T2, T3, TResult>(string name, Func<T1, T2, T3, TResult> callback)
+            => ExposeBindingAsync(name, (BindingSource _, T1 t1, T2 t2, T3 t3) => callback(t1, t2, t3));
 
         /// <inheritdoc/>
-        public Task ExposeFunctionAsync<T1, T2, T3, T4, TResult>(string name, Func<T1, T2, T3, T4, TResult> playwrightFunction)
-            => ExposeBindingAsync(name, (BindingSource _, T1 t1, T2 t2, T3 t3, T4 t4) => playwrightFunction(t1, t2, t3, t4));
+        public Task ExposeFunctionAsync<T1, T2, T3, T4, TResult>(string name, Func<T1, T2, T3, T4, TResult> callback)
+            => ExposeBindingAsync(name, (BindingSource _, T1 t1, T2 t2, T3 t3, T4 t4) => callback(t1, t2, t3, t4));
 
         /// <inheritdoc/>
         public async Task<T> WaitForEventAsync<T>(PlaywrightEvent<T> e, Func<T, bool> predicate = null, int? timeout = null)
@@ -220,7 +230,7 @@ namespace PlaywrightSharp
                 throw new ArgumentException("Page event is required", nameof(e));
             }
 
-            timeout ??= _timeoutSettings.Timeout;
+            timeout ??= TimeoutSettings.Timeout;
             using var waiter = new Waiter();
             waiter.RejectOnTimeout(timeout, $"Timeout while waiting for event \"{typeof(T)}\"");
 
@@ -304,7 +314,22 @@ namespace PlaywrightSharp
                 });
 
         /// <inheritdoc />
-        public Task SetExtraHttpHeadersAsync(Dictionary<string, string> headers) => Channel.SetExtraHttpHeadersAsync(headers);
+        public Task SetExtraHTTPHeadersAsync(Dictionary<string, string> headers) => Channel.SetExtraHTTPHeadersAsync(headers);
+
+        /// <inheritdoc />
+        public async Task<StorageState> GetStorageStateAsync(string path = null)
+        {
+            var state = await Channel.GetStorageStateAsync().ConfigureAwait(false);
+
+            if (!string.IsNullOrEmpty(path))
+            {
+                File.WriteAllText(
+                    path,
+                    JsonSerializer.Serialize(state, Channel.Connection.GetDefaultJsonSerializerOptions()));
+            }
+
+            return state;
+        }
 
         internal void OnRoute(Route route, Request request)
         {
@@ -355,7 +380,6 @@ namespace PlaywrightSharp
 
         private void Channel_Closed(object sender, EventArgs e)
         {
-            _isClosedOrClosing = true;
             if (Browser != null)
             {
                 ((Browser)Browser).BrowserContextsList.Remove(this);
@@ -369,7 +393,7 @@ namespace PlaywrightSharp
         private void Channel_OnPage(object sender, BrowserContextPageEventArgs e)
         {
             var page = e.PageChannel.Object;
-            page.BrowserContext = this;
+            page.Context = this;
             PagesList.Add(page);
             Page?.Invoke(this, new PageEventArgs { Page = page });
         }
@@ -386,7 +410,7 @@ namespace PlaywrightSharp
 
         private void RejectPendingOperations()
         {
-            foreach (var (_, waitTcs) in _waitForCancellationTcs.Where(e => e.contextEvent != ContextEvent.Close))
+            foreach (var (_, waitTcs) in _waitForCancellationTcs.Where(e => e.ContextEvent != ContextEvent.Close))
             {
                 waitTcs.TrySetException(new TargetClosedException("Context closed"));
             }
@@ -394,7 +418,7 @@ namespace PlaywrightSharp
             _waitForCancellationTcs.Clear();
         }
 
-        private Task ExposeBindingAsync(string name, Delegate playwrightFunction, bool handle = false)
+        private Task ExposeBindingAsync(string name, Delegate callback, bool handle = false)
         {
             foreach (var page in PagesList)
             {
@@ -409,9 +433,13 @@ namespace PlaywrightSharp
                 throw new PlaywrightSharpException($"Function \"{name}\" has been already registered");
             }
 
-            _bindings.Add(name, playwrightFunction);
+            _bindings.Add(name, callback);
 
             return Channel.ExposeBindingAsync(name, handle);
         }
+
+        private bool IsSafeCloseException(Exception e)
+            => e.Message.Contains(DriverMessages.BrowserClosedExceptionMessage) ||
+               e.Message.Contains(DriverMessages.BrowserOrContextClosedExceptionMessage);
     }
 }
