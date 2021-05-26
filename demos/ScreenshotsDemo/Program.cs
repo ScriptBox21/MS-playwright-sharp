@@ -1,23 +1,23 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using PlaywrightSharp;
+using Microsoft.Playwright;
 
-namespace PdfDemo
+namespace ScreenshotsDemo
 {
     class Program
     {
         static async Task Main(string[] args)
         {
             using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Chromium.LaunchAsync(new LaunchOptions { Headless = true });
+            await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
 
             Console.WriteLine("Navigating microsoft");
             var page = await browser.NewPageAsync();
-            await page.GoToAsync("http://www.microsoft.com");
+            await page.GotoAsync("http://www.microsoft.com");
 
             Console.WriteLine("Taking Screenshot");
-            File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), "microsoft.png"), await page.ScreenshotAsync());
+            await File.WriteAllBytesAsync(Path.Combine(Directory.GetCurrentDirectory(), "microsoft.png"), await page.ScreenshotAsync());
 
             Console.WriteLine("Export completed");
         }

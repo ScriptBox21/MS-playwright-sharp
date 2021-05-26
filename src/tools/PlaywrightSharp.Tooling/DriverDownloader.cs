@@ -58,15 +58,40 @@ namespace PlaywrightSharp.Tooling
 
         private static async Task UpdateBrowserVersionsAsync(string basePath, string driverVersion)
         {
-            string readmePath = Path.Combine(basePath, "README.md");
-            string readmeInDocsPath = Path.Combine(basePath, "docfx_project", "documentation", "index.md");
-            string playwrightVersion = driverVersion;
-            var regex = new Regex("<!-- GEN:(.*?) -->(.*?)<!-- GEN:stop -->", RegexOptions.Compiled);
+            try
+            {
+                string readmePath = Path.Combine(basePath, "README.md");
+                string playwrightVersion = driverVersion.Contains("-") ? driverVersion.Substring(0, driverVersion.IndexOf("-")) : driverVersion;
 
-            string readme = await GetUpstreamReadmeAsync(playwrightVersion).ConfigureAwait(false);
-            var browserMatches = regex.Matches(readme);
-            File.WriteAllText(readmePath, ReplaceBrowserVersion(File.ReadAllText(readmePath), browserMatches));
-            File.WriteAllText(readmeInDocsPath, ReplaceBrowserVersion(File.ReadAllText(readmeInDocsPath), browserMatches));
+                var regex = new Regex("<!-- GEN:(.*?) -->(.*?)<!-- GEN:stop -->", RegexOptions.Compiled);
+                string readme;
+                try
+                {
+                    readme = await GetUpstreamReadmeAsync(playwrightVersion).ConfigureAwait(false);
+                }
+                catch
+                {
+                    if (playwrightVersion.EndsWith(".0"))
+                    {
+                        throw new FileNotFoundException("Could not find a suitable README file with browser version, nor fallback.");
+                    }
+
+                    // fallback to a x.y.0 revision
+                    playwrightVersion = $"{playwrightVersion.Substring(0, playwrightVersion.LastIndexOf('.') + 1)}.0";
+                    readme = await GetUpstreamReadmeAsync(playwrightVersion).ConfigureAwait(false);
+                }
+
+                var browserMatches = regex.Matches(readme);
+                string readmeText = await File.ReadAllTextAsync(readmePath).ConfigureAwait(false);
+                await File.WriteAllTextAsync(readmePath, ReplaceBrowserVersion(readmeText, browserMatches)).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("WARNING: Could not update the browser versions in the README file.");
+                Console.WriteLine($"This is usually due to the readme file not yet existing for {driverVersion}.");
+                Console.WriteLine(e.Message);
+            }
         }
 
         private static string ReplaceBrowserVersion(string content, MatchCollection browserMatches)
@@ -90,12 +115,7 @@ namespace PlaywrightSharp.Tooling
         private async Task DownloadDriverAsync(DirectoryInfo destinationDirectory, string driverVersion, string platform, string runtime)
         {
             Console.WriteLine("Downloading driver for " + platform);
-            string cdn = "https://playwright.azureedge.net/builds/driver";
-
-            if (driverVersion.Contains("next"))
-            {
-                cdn += "/next";
-            }
+            string cdn = "https://playwright.azureedge.net/builds/driver/next";
 
             using var client = new HttpClient();
             string url = $"{cdn}/playwright-{driverVersion}-{platform}.zip";
@@ -138,7 +158,7 @@ namespace PlaywrightSharp.Tooling
 
         private async Task<bool> ExecuteAsync()
         {
-            var destinationDirectory = new DirectoryInfo(Path.Combine(BasePath, "src", "PlaywrightSharp", "runtimes"));
+            var destinationDirectory = new DirectoryInfo(Path.Combine(BasePath, "src", "Playwright", "Drivers"));
             string driverVersion = DriverVersion;
 
             if (!destinationDirectory.Exists)
