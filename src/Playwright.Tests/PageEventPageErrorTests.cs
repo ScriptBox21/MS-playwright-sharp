@@ -1,32 +1,51 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageEventPageErrorTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageEventPageErrorTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageEventPageErrorTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-event-pageerror.spec.ts", "should fire")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFire()
         {
+            var errorEvent = new TaskCompletionSource<string>();
+            Page.PageError += (_, error) => errorEvent.TrySetResult(error);
+
             var (error, _) = await TaskUtils.WhenAll(
-                Page.WaitForEventAsync(PageEvent.PageError),
-                Page.GotoAsync(TestConstants.ServerUrl + "/error.html")
+                errorEvent.Task,
+                Page.GotoAsync(Server.Prefix + "/error.html")
             );
 
-            Assert.Contains("Error", error);
-            Assert.Contains("Fancy error!", error);
+            StringAssert.Contains("Error", error);
+            StringAssert.Contains("Fancy error!", error);
             string stack = await Page.EvaluateAsync<string>("() => window.e.stack");
 
             if (TestConstants.IsWebKit)
@@ -34,22 +53,24 @@ namespace Microsoft.Playwright.Tests
                 stack = stack.Replace("14:25", "15:19");
             }
 
-            Assert.Contains(stack, error);
+            StringAssert.Contains(stack, error);
         }
 
         [PlaywrightTest("page-event-pageerror.spec.ts", "should contain sourceURL")]
-        [SkipBrowserAndPlatformFact(skipWebkit: true)]
+        [Test, SkipBrowserAndPlatform(skipWebkit: true)]
         public async Task ShouldContainSourceURL()
         {
+            var pageError = new TaskCompletionSource<string>();
+            Page.PageError += (_, error) => pageError.TrySetResult(error);
             var (error, _) = await TaskUtils.WhenAll(
-                Page.WaitForEventAsync(PageEvent.PageError),
-                Page.GotoAsync(TestConstants.ServerUrl + "/error.html"));
+                pageError.Task,
+                Page.GotoAsync(Server.Prefix + "/error.html"));
 
-            Assert.Contains("myscript.js", error);
+            StringAssert.Contains("myscript.js", error);
         }
 
         [PlaywrightTest("page-event-pageerror.spec.ts", "should handle odd values")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldHandleOddValues()
         {
             object[][] cases = new object[][]
@@ -62,34 +83,40 @@ namespace Microsoft.Playwright.Tests
 
             foreach (object[] kv in cases)
             {
+                var pageError = new TaskCompletionSource<string>();
+                Page.PageError += (_, error) => pageError.TrySetResult(error);
                 var (error, _) = await TaskUtils.WhenAll(
-                    Page.WaitForEventAsync(PageEvent.PageError),
+                    pageError.Task,
                     Page.EvaluateAsync<JsonElement>("value => setTimeout(() => { throw value; }, 0)", kv[0]));
 
-                Assert.Contains(TestConstants.IsFirefox ? "uncaught exception: " + kv[1].ToString() : kv[1].ToString(), error);
+                StringAssert.Contains(TestConstants.IsFirefox ? "uncaught exception: " + kv[1].ToString() : kv[1].ToString(), error);
             }
         }
 
         [PlaywrightTest("page-event-pageerror.spec.ts", "should handle object")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true)]
         public async Task ShouldHandleObject()
         {
+            var pageError = new TaskCompletionSource<string>();
+            Page.PageError += (_, error) => pageError.TrySetResult(error);
             var (error, _) = await TaskUtils.WhenAll(
-                Page.WaitForEventAsync(PageEvent.PageError),
+                pageError.Task,
                 Page.EvaluateAsync<JsonElement>("value => setTimeout(() => { throw {}; }, 0)", 0));
 
-            Assert.Contains(TestConstants.IsChromium ? "Object" : "[object Object]", error);
+            StringAssert.Contains(TestConstants.IsChromium ? "Object" : "[object Object]", error);
         }
 
         [PlaywrightTest("page-event-pageerror.spec.ts", "should handle window")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true)]
         public async Task ShouldHandleWindow()
         {
+            var pageError = new TaskCompletionSource<string>();
+            Page.PageError += (_, error) => pageError.TrySetResult(error);
             var (error, _) = await TaskUtils.WhenAll(
-                Page.WaitForEventAsync(PageEvent.PageError),
+                pageError.Task,
                 Page.EvaluateAsync<JsonElement>("value => setTimeout(() => { throw window ; }, 0)", 0));
 
-            Assert.Contains(TestConstants.IsChromium ? "Window" : "[object Window]", error);
+            StringAssert.Contains(TestConstants.IsChromium ? "Window" : "[object Window]", error);
         }
     }
 }

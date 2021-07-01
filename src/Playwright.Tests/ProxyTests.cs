@@ -1,40 +1,57 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class ProxyTests : PlaywrightSharpBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class ProxyTests : PlaywrightTestEx
     {
-        /// <inheritdoc/>
-        public ProxyTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("proxy.spec.ts", "should use proxy")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldUseProxy()
         {
             Server.SetRoute("/target.html", ctx => ctx.Response.WriteAsync("<html><title>Served by the proxy</title></html>"));
 
-            var proxy = new Proxy { Server = $"localhost:{TestConstants.Port}" };
+            var proxy = new Proxy { Server = $"localhost:{Server.Port}" };
 
-            await using var browser = await BrowserType.LaunchAsync(new BrowserTypeLaunchOptions { Proxy = proxy });
+            await using var browser = await BrowserType.LaunchAsync(new() { Proxy = proxy });
 
             var page = await browser.NewPageAsync();
             await page.GotoAsync("http://non-existent.com/target.html");
 
-            Assert.Equal("Served by the proxy", await page.TitleAsync());
+            Assert.AreEqual("Served by the proxy", await page.TitleAsync());
         }
 
         [PlaywrightTest("proxy.spec.ts", "should authenticate")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldAuthenticate()
         {
             Server.SetRoute("/target.html", ctx =>
@@ -52,41 +69,41 @@ namespace Microsoft.Playwright.Tests
 
             var proxy = new Proxy
             {
-                Server = $"localhost:{TestConstants.Port}",
+                Server = $"localhost:{Server.Port}",
                 Username = "user",
                 Password = "secret"
             };
 
-            await using var browser = await BrowserType.LaunchAsync(new BrowserTypeLaunchOptions { Proxy = proxy });
+            await using var browser = await BrowserType.LaunchAsync(new() { Proxy = proxy });
 
             var page = await browser.NewPageAsync();
             await page.GotoAsync("http://non-existent.com/target.html");
 
-            Assert.Equal("Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes("user:secret")), await page.TitleAsync());
+            Assert.AreEqual("Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes("user:secret")), await page.TitleAsync());
         }
 
         [PlaywrightTest("proxy.spec.ts", "should exclude patterns")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldExcludePatterns()
         {
             Server.SetRoute("/target.html", ctx => ctx.Response.WriteAsync("<html><title>Served by the proxy</title></html>"));
 
             var proxy = new Proxy
             {
-                Server = $"localhost:{TestConstants.Port}",
+                Server = $"localhost:{Server.Port}",
                 Bypass = "non-existent1.com, .non-existent2.com, .zone",
             };
 
-            await using var browser = await BrowserType.LaunchAsync(new BrowserTypeLaunchOptions { Proxy = proxy });
+            await using var browser = await BrowserType.LaunchAsync(new() { Proxy = proxy });
 
             var page = await browser.NewPageAsync();
             await page.GotoAsync("http://non-existent.com/target.html");
 
-            Assert.Equal("Served by the proxy", await page.TitleAsync());
+            Assert.AreEqual("Served by the proxy", await page.TitleAsync());
 
-            await Assert.ThrowsAnyAsync<PlaywrightException>(() => page.GotoAsync("http://non-existent1.com/target.html"));
-            await Assert.ThrowsAnyAsync<PlaywrightException>(() => page.GotoAsync("http://sub.non-existent2.com/target.html"));
-            await Assert.ThrowsAnyAsync<PlaywrightException>(() => page.GotoAsync("http://foo.zone/target.html"));
+            await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => page.GotoAsync("http://non-existent1.com/target.html"));
+            await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => page.GotoAsync("http://sub.non-existent2.com/target.html"));
+            await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => page.GotoAsync("http://foo.zone/target.html"));
         }
     }
 }

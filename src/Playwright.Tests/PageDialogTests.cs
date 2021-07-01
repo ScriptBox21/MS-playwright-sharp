@@ -1,55 +1,72 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2020 Darío Kondratiuk
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageDialogTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageDialogTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageDialogTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-dialog.spec.ts", "should fire")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public async Task ShouldFire()
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public Task ShouldFire()
         {
             Page.Dialog += async (_, e) =>
             {
-                Assert.Equal(DialogType.Alert, e.Type);
-                Assert.Equal(string.Empty, e.DefaultValue);
-                Assert.Equal("yo", e.Message);
+                Assert.AreEqual(DialogType.Alert, e.Type);
+                Assert.AreEqual(string.Empty, e.DefaultValue);
+                Assert.AreEqual("yo", e.Message);
 
                 await e.AcceptAsync();
             };
 
-            await Page.EvaluateAsync("alert('yo');");
+            return Page.EvaluateAsync("alert('yo');");
         }
 
         [PlaywrightTest("page-dialog.spec.ts", "should allow accepting prompts")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldAllowAcceptingPrompts()
         {
             Page.Dialog += async (_, e) =>
             {
-                Assert.Equal(DialogType.Prompt, e.Type);
-                Assert.Equal("yes.", e.DefaultValue);
-                Assert.Equal("question?", e.Message);
+                Assert.AreEqual(DialogType.Prompt, e.Type);
+                Assert.AreEqual("yes.", e.DefaultValue);
+                Assert.AreEqual("question?", e.Message);
 
                 await e.AcceptAsync("answer!");
             };
 
             string result = await Page.EvaluateAsync<string>("prompt('question?', 'yes.')");
-            Assert.Equal("answer!", result);
+            Assert.AreEqual("answer!", result);
         }
 
         [PlaywrightTest("page-dialog.spec.ts", "should dismiss the prompt")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldDismissThePrompt()
         {
             Page.Dialog += async (_, e) =>
@@ -62,7 +79,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-dialog.spec.ts", "should accept the confirm prompt")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldAcceptTheConfirmPrompts()
         {
             Page.Dialog += async (_, e) =>
@@ -75,7 +92,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-dialog.spec.ts", "should dismiss the confirm prompt")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldDismissTheConfirmPrompt()
         {
             Page.Dialog += async (_, e) =>
@@ -88,7 +105,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-dialog.spec.ts", "should log prompt actions")]
-        [Fact(Skip = "FAIL CHANNEL")]
+        [Test, Ignore("FAIL CHANNEL")]
         public async Task ShouldLogPromptActions()
         {
             Page.Dialog += async (_, e) =>
@@ -101,20 +118,22 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-dialog.spec.ts", "should be able to close context with open alert")]
-        [SkipBrowserAndPlatformFact(skipWebkit: true)]
+        [Test, SkipBrowserAndPlatform(skipWebkit: true)]
         public async Task ShouldBeAbleToCloseContextWithOpenAlert()
         {
             var context = await Browser.NewContextAsync();
             var page = await context.NewPageAsync();
-            var alertTask = page.WaitForEventAsync(PageEvent.Dialog);
+
+            var alertEvent = new TaskCompletionSource<IDialog>();
+            page.Dialog += (_, dialog) => alertEvent.TrySetResult(dialog);
 
             await page.EvaluateAsync("() => setTimeout(() => alert('hello'), 0)");
-            await alertTask;
+            await alertEvent.Task;
             await context.CloseAsync();
         }
 
         [PlaywrightTest("page-dialog.spec.ts", "should auto-dismiss the prompt without listeners")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldAutoDismissThePrompt()
         {
             string result = await Page.EvaluateAsync<string>("prompt('question?')");

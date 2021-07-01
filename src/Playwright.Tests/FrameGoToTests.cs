@@ -1,73 +1,91 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2020 Darío Kondratiuk
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class FrameGoToTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class FrameGoToTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public FrameGoToTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("frame-goto.spec.ts", "should navigate subframes")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldNavigateSubFrames()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/frames/one-frame.html");
-            Assert.Single(Page.Frames.Where(f => f.Url.Contains("/frames/one-frame.html")));
-            Assert.Single(Page.Frames.Where(f => f.Url.Contains("/frames/frame.html")));
+            await Page.GotoAsync(Server.Prefix + "/frames/one-frame.html");
+            Assert.AreEqual(1, Page.Frames.Where(f => f.Url.Contains("/frames/one-frame.html")).Count());
+            Assert.AreEqual(1, Page.Frames.Where(f => f.Url.Contains("/frames/frame.html")).Count());
             var childFrame = Page.FirstChildFrame();
-            var response = await childFrame.GotoAsync(TestConstants.EmptyPage);
-            Assert.Equal((int)HttpStatusCode.OK, response.Status);
-            Assert.Same(response.Frame, childFrame);
+            var response = await childFrame.GotoAsync(Server.EmptyPage);
+            Assert.AreEqual((int)HttpStatusCode.OK, response.Status);
+            Assert.AreEqual(response.Frame, childFrame);
         }
 
         [PlaywrightTest("frame-goto.spec.ts", "should reject when frame detaches")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldRejectWhenFrameDetaches()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/frames/one-frame.html");
+            await Page.GotoAsync(Server.Prefix + "/frames/one-frame.html");
             Server.SetRoute("/empty.html", _ => Task.Delay(10000));
             var waitForRequestTask = Server.WaitForRequest("/empty.html");
-            var navigationTask = Page.FirstChildFrame().GotoAsync(TestConstants.EmptyPage);
+            var navigationTask = Page.FirstChildFrame().GotoAsync(Server.EmptyPage);
             await waitForRequestTask;
             await Page.EvalOnSelectorAsync("iframe", "frame => frame.remove()");
-            var exception = await Assert.ThrowsAsync<PlaywrightException>(async () => await navigationTask);
-            Assert.Contains("frame was detached", exception.Message);
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => navigationTask);
+            StringAssert.Contains("frame was detached", exception.Message);
         }
 
         [PlaywrightTest("frame-goto.spec.ts", "should continue after client redirect")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldContinueAfterClientRedirect()
         {
             Server.SetRoute("/frames/script.js", _ => Task.Delay(10000));
-            string url = TestConstants.ServerUrl + "/frames/child-redirect.html";
-            var exception = await Assert.ThrowsAnyAsync<TimeoutException>(() => Page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 5000 }));
+            string url = Server.Prefix + "/frames/child-redirect.html";
+            var exception = await PlaywrightAssert.ThrowsAsync<TimeoutException>(() => Page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 5000 }));
 
-            Assert.Contains("Timeout 5000ms", exception.Message);
-            Assert.Contains($"navigating to \"{url}\", waiting until \"networkidle\"", exception.Message);
+            StringAssert.Contains("Timeout 5000ms", exception.Message);
+            StringAssert.Contains($"navigating to \"{url}\", waiting until \"networkidle\"", exception.Message);
         }
 
         [PlaywrightTest("frame-goto.spec.ts", "should return matching responses")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReturnMatchingResponses()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
             // Attach three frames.
             var matchingData = new MatchingResponseData[]
             {
-                new MatchingResponseData{ FrameTask =  FrameUtils.AttachFrameAsync(Page, "frame1", TestConstants.EmptyPage)},
-                new MatchingResponseData{ FrameTask =  FrameUtils.AttachFrameAsync(Page, "frame2", TestConstants.EmptyPage)},
-                new MatchingResponseData{ FrameTask =  FrameUtils.AttachFrameAsync(Page, "frame3", TestConstants.EmptyPage)}
+                new() { FrameTask =  FrameUtils.AttachFrameAsync(Page, "frame1", Server.EmptyPage)},
+                new() { FrameTask =  FrameUtils.AttachFrameAsync(Page, "frame2", Server.EmptyPage)},
+                new() { FrameTask =  FrameUtils.AttachFrameAsync(Page, "frame3", Server.EmptyPage)}
             };
 
             await TaskUtils.WhenAll(matchingData.Select(m => m.FrameTask));
@@ -88,7 +106,7 @@ namespace Microsoft.Playwright.Tests
             for (int i = 0; i < 3; ++i)
             {
                 var waitRequestTask = Server.WaitForRequest("/one-style.html");
-                matchingData[i].NavigationTask = matchingData[i].FrameTask.Result.GotoAsync($"{TestConstants.ServerUrl}/one-style.html?index={i}");
+                matchingData[i].NavigationTask = matchingData[i].FrameTask.Result.GotoAsync($"{Server.Prefix}/one-style.html?index={i}");
                 await waitRequestTask;
             }
             // Respond from server out-of-order.
@@ -97,15 +115,15 @@ namespace Microsoft.Playwright.Tests
             {
                 matchingData[i].ServerResponseTcs.TrySetResult(serverResponseTexts[i]);
                 var response = await matchingData[i].NavigationTask;
-                Assert.Same(matchingData[i].FrameTask.Result, response.Frame);
-                Assert.Equal(serverResponseTexts[i], await response.TextAsync());
+                Assert.AreEqual(matchingData[i].FrameTask.Result, response.Frame);
+                Assert.AreEqual(serverResponseTexts[i], await response.TextAsync());
             }
         }
 
         class MatchingResponseData
         {
             public Task<IFrame> FrameTask { get; internal set; }
-            public TaskCompletionSource<string> ServerResponseTcs { get; internal set; } = new TaskCompletionSource<string>();
+            public TaskCompletionSource<string> ServerResponseTcs { get; internal set; } = new();
             public Task<IResponse> NavigationTask { get; internal set; }
         }
     }

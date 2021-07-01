@@ -1,8 +1,33 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2020 Darío Kondratiuk
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Xunit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
@@ -10,7 +35,9 @@ namespace Microsoft.Playwright.Tests
     {
         internal static string FindParentDirectory(string directory)
         {
-            string current = Directory.GetCurrentDirectory();
+            // when using Directory.GetCurrentDirectory, for .NET 4.8 under test explorer on Windows,
+            // the location was Local App Data
+            string current = AppContext.BaseDirectory;
             while (!Directory.Exists(Path.Combine(current, directory)))
             {
                 current = Directory.GetParent(current).FullName;
@@ -22,20 +49,20 @@ namespace Microsoft.Playwright.Tests
         {
             if (TestConstants.IsChromium)
             {
-                Assert.Contains("net::ERR_CERT_AUTHORITY_INVALID", errorMessage);
+                StringAssert.Contains("net::ERR_CERT_AUTHORITY_INVALID", errorMessage);
             }
             else if (TestConstants.IsWebKit)
             {
                 if (TestConstants.IsMacOSX)
-                    Assert.Contains("The certificate for this server is invalid", errorMessage);
+                    StringAssert.Contains("The certificate for this server is invalid", errorMessage);
                 else if (TestConstants.IsWindows)
-                    Assert.Contains("SSL peer certificate or SSH remote key was not OK", errorMessage);
+                    StringAssert.Contains("SSL peer certificate or SSH remote key was not OK", errorMessage);
                 else
-                    Assert.Contains("Unacceptable TLS certificate", errorMessage);
+                    StringAssert.Contains("Unacceptable TLS certificate", errorMessage);
             }
             else
             {
-                Assert.Contains("SSL_ERROR_UNKNOWN", errorMessage);
+                StringAssert.Contains("SSL_ERROR_UNKNOWN", errorMessage);
             }
         }
 
@@ -83,7 +110,7 @@ namespace Microsoft.Playwright.Tests
         {
             try
             {
-                await playwright.Selectors.RegisterAsync(name, new SelectorsRegisterOptions { Path = path });
+                await playwright.Selectors.RegisterAsync(name, new() { Path = path });
             }
             catch (PlaywrightException ex) when (ex.Message.Contains("has been already registered"))
             {
@@ -94,17 +121,17 @@ namespace Microsoft.Playwright.Tests
 
         internal static async Task VerifyViewportAsync(IPage page, int width, int height)
         {
-            Assert.Equal(width, (int)page.ViewportSize.Width);
-            Assert.Equal(height, (int)page.ViewportSize.Height);
-            Assert.Equal(width, await page.EvaluateAsync<int>("window.innerWidth"));
-            Assert.Equal(height, await page.EvaluateAsync<int>("window.innerHeight"));
+            Assert.AreEqual(width, (int)page.ViewportSize.Width);
+            Assert.AreEqual(height, (int)page.ViewportSize.Height);
+            Assert.AreEqual(width, await page.EvaluateAsync<int>("window.innerWidth"));
+            Assert.AreEqual(height, await page.EvaluateAsync<int>("window.innerHeight"));
         }
 
         internal static async Task RegisterEngineAsync(IPlaywright playwright, string name, string script, bool? contentScript = null)
         {
             try
             {
-                await playwright.Selectors.RegisterAsync(name, new SelectorsRegisterOptions { Script = script, ContentScript = contentScript });
+                await playwright.Selectors.RegisterAsync(name, new() { Script = script, ContentScript = contentScript });
             }
             catch (PlaywrightException ex) when (ex.Message.Contains("has been already registered"))
             {

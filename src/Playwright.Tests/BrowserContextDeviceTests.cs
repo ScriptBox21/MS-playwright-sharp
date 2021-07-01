@@ -1,53 +1,69 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class BrowserContextDeviceTests : PlaywrightSharpBrowserBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class BrowserContextDeviceTests : BrowserTestEx
     {
-        /// <inheritdoc/>
-        public BrowserContextDeviceTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("browsercontext-device.spec.ts", "should work")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true)]
         public async Task ShouldWork()
         {
             await using var context = await Browser.NewContextAsync(Playwright.Devices["iPhone 6"]);
             var page = await context.NewPageAsync();
 
-            await page.GotoAsync(TestConstants.ServerUrl + "/mobile.html");
-            Assert.Equal(375, await page.EvaluateAsync<int>("window.innerWidth"));
-            Assert.Contains("iPhone", await page.EvaluateAsync<string>("navigator.userAgent"));
+            await page.GotoAsync(Server.Prefix + "/mobile.html");
+            Assert.AreEqual(375, await page.EvaluateAsync<int>("window.innerWidth"));
+            StringAssert.Contains("iPhone", await page.EvaluateAsync<string>("navigator.userAgent"));
         }
 
         [PlaywrightTest("browsercontext-device.spec.ts", "should support clicking")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true)]
         public async Task ShouldSupportClicking()
         {
             await using var context = await Browser.NewContextAsync(Playwright.Devices["iPhone 6"]);
             var page = await context.NewPageAsync();
 
-            await page.GotoAsync(TestConstants.ServerUrl + "/input/button.html");
+            await page.GotoAsync(Server.Prefix + "/input/button.html");
             var button = await page.QuerySelectorAsync("button");
             await button.EvaluateAsync("button => button.style.marginTop = '200px'", button);
             await button.ClickAsync();
-            Assert.Equal("Clicked", await page.EvaluateAsync<string>("() => result"));
+            Assert.AreEqual("Clicked", await page.EvaluateAsync<string>("() => result"));
         }
 
         [PlaywrightTest("browsercontext-device.spec.ts", "should scroll to click")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true)]
         public async Task ShouldScrollToClick()
         {
-            await using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
+            await using var context = await Browser.NewContextAsync(new()
             {
-                ViewportSize = new ViewportSize
+                ViewportSize = new()
                 {
                     Width = 400,
                     Height = 400,
@@ -57,10 +73,10 @@ namespace Microsoft.Playwright.Tests
             });
             var page = await context.NewPageAsync();
 
-            await page.GotoAsync(TestConstants.ServerUrl + "/input/scrollable.html");
+            await page.GotoAsync(Server.Prefix + "/input/scrollable.html");
             var element = await page.QuerySelectorAsync("#button-91");
             await element.ClickAsync();
-            Assert.Equal("clicked", await element.TextContentAsync());
+            Assert.AreEqual("clicked", await element.TextContentAsync());
         }
     }
 }

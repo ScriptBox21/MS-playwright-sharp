@@ -23,15 +23,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Globalization;
-using System.IO;
-using System.Runtime.Serialization;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.Playwright
@@ -49,10 +40,6 @@ namespace Microsoft.Playwright
     /// </summary>
     public partial interface IBrowserContext : IAsyncDisposable
     {
-        Task<T> WaitForEventAsync<T>(PlaywrightEvent<T> playwrightEvent, BrowserContextWaitForEventOptions<T> options = default);
-
-        Task<T> RunAndWaitForEventAsync<T>(PlaywrightEvent<T> playwrightEvent, Func<Task> action, BrowserContextRunAndWaitForEventOptions<T> options = default);
-
         /// <inheritdoc cref="ExposeBindingAsync(string, Action, BrowserContextExposeBindingOptions)"/>
         Task ExposeBindingAsync(string name, Action<BindingSource> callback);
 

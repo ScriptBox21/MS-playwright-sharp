@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>exe</OutputType>
+    <Title>Microsoft.Playwright.CLI</Title>
+    <PackageId>Microsoft.Playwright.CLI</PackageId>
+    <Summary>The Playwright CLI dotnet tool.</Summary>
+    <Description>Playwright enables reliable end-to-end testing for modern web apps. It is built to enable cross-browser web automation that is ever-green, capable, reliable and fast. Learn more at https://playwright.dev/dotnet/.</Description>
+    <TargetFrameworks>net5.0;netcoreapp2.1</TargetFrameworks>
+    <DebugSymbols>true</DebugSymbols>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <RunWithWarnings>true</RunWithWarnings>
+    <RootNamespace>Microsoft.Playwright.CLI</RootNamespace>
+    <ReleaseVersion>0.0.0</ReleaseVersion>
+    <BuildFromSource>True</BuildFromSource>
+    <AssemblyName>Microsoft.Playwright.CLI</AssemblyName>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>playwright</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyVersion>1.0.1</AssemblyVersion>
+    <PackageVersion>$(AssemblyVersion)-next-1</PackageVersion>
+    <ReleaseVersion>$(AssemblyVersion)</ReleaseVersion>
+    <FileVersion>$(AssemblyVersion)</FileVersion>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <Authors>Microsoft</Authors>
+    <Owners>Microsoft</Owners>
+    <PackageProjectUrl>https://github.com/microsoft/playwright-dotnet</PackageProjectUrl>
+    <PackageTags>headless,chrome,firefox,webkit,playwright</PackageTags>
+    <RepositoryUrl>https://github.com/microsoft/playwright-dotnet.git</RepositoryUrl>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReleaseNotes><![CDATA[
+]]></PackageReleaseNotes>
+  </PropertyGroup>
+  <Import Project="../Common/SignAssembly.props" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudioEng.MicroBuild.Core" Version="0.4.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

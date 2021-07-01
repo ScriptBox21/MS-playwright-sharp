@@ -24,6 +24,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -33,6 +34,8 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+
+#nullable enable
 
 namespace Microsoft.Playwright
 {
@@ -61,6 +64,7 @@ namespace Microsoft.Playwright
             Offline = clone.Offline;
             HttpCredentials = clone.HttpCredentials;
             ColorScheme = clone.ColorScheme;
+            ReducedMotion = clone.ReducedMotion;
             RecordHarPath = clone.RecordHarPath;
             RecordHarOmitContent = clone.RecordHarOmitContent;
             RecordVideoDir = clone.RecordVideoDir;
@@ -94,7 +98,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("viewport")]
-        public ViewportSize ViewportSize { get; set; }
+        public ViewportSize? ViewportSize { get; set; }
 
         /// <summary>
         /// <para>
@@ -103,11 +107,11 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("screen")]
-        public ScreenSize ScreenSize { get; set; }
+        public ScreenSize? ScreenSize { get; set; }
 
         /// <summary><para>Specific user agent to use in this context.</para></summary>
         [JsonPropertyName("userAgent")]
-        public string UserAgent { get; set; }
+        public string? UserAgent { get; set; }
 
         /// <summary><para>Specify device scale factor (can be thought of as dpr). Defaults to <c>1</c>.</para></summary>
         [JsonPropertyName("deviceScaleFactor")]
@@ -137,10 +141,10 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("timezoneId")]
-        public string TimezoneId { get; set; }
+        public string? TimezoneId { get; set; }
 
         [JsonPropertyName("geolocation")]
-        public Geolocation Geolocation { get; set; }
+        public Geolocation? Geolocation { get; set; }
 
         /// <summary>
         /// <para>
@@ -150,7 +154,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("locale")]
-        public string Locale { get; set; }
+        public string? Locale { get; set; }
 
         /// <summary>
         /// <para>
@@ -159,7 +163,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("permissions")]
-        public IEnumerable<string> Permissions { get; set; }
+        public IEnumerable<string>? Permissions { get; set; }
 
         /// <summary>
         /// <para>
@@ -168,7 +172,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("extraHTTPHeaders")]
-        public IEnumerable<KeyValuePair<string, string>> ExtraHTTPHeaders { get; set; }
+        public IEnumerable<KeyValuePair<string, string>>? ExtraHTTPHeaders { get; set; }
 
         /// <summary><para>Whether to emulate network being offline. Defaults to <c>false</c>.</para></summary>
         [JsonPropertyName("offline")]
@@ -181,7 +185,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("httpCredentials")]
-        public HttpCredentials HttpCredentials { get; set; }
+        public HttpCredentials? HttpCredentials { get; set; }
 
         /// <summary>
         /// <para>
@@ -195,6 +199,16 @@ namespace Microsoft.Playwright
 
         /// <summary>
         /// <para>
+        /// Emulates <c>'prefers-reduced-motion'</c> media feature, supported values are <c>'reduce'</c>,
+        /// <c>'no-preference'</c>. See <see cref="IPage.EmulateMediaAsync"/> for more details.
+        /// Defaults to <c>'no-preference'</c>.
+        /// </para>
+        /// </summary>
+        [JsonPropertyName("reducedMotion")]
+        public ReducedMotion? ReducedMotion { get; set; }
+
+        /// <summary>
+        /// <para>
         /// Enables <a href="http://www.softwareishard.com/blog/har-12-spec">HAR</a> recording
         /// for all pages into the specified HAR file on the filesystem. If not specified, the
         /// HAR is not recorded. Make sure to call <see cref="IBrowserContext.CloseAsync"/>
@@ -202,7 +216,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("recordHarPath")]
-        public string RecordHarPath { get; set; }
+        public string? RecordHarPath { get; set; }
 
         /// <summary>
         /// <para>
@@ -221,7 +235,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("recordVideoDir")]
-        public string RecordVideoDir { get; set; }
+        public string? RecordVideoDir { get; set; }
 
         /// <summary>
         /// <para>
@@ -232,7 +246,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("recordVideoSize")]
-        public RecordVideoSize RecordVideoSize { get; set; }
+        public RecordVideoSize? RecordVideoSize { get; set; }
 
         /// <summary><para>Network proxy settings to use with this context.</para></summary>
         /// <remarks>
@@ -244,7 +258,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// </remarks>
         [JsonPropertyName("proxy")]
-        public Proxy Proxy { get; set; }
+        public Proxy? Proxy { get; set; }
 
         /// <summary>
         /// <para>
@@ -253,7 +267,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("storageState")]
-        public string StorageState { get; set; }
+        public string? StorageState { get; set; }
 
         /// <summary>
         /// <para>
@@ -263,6 +277,8 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         [JsonPropertyName("storageStatePath")]
-        public string StorageStatePath { get; set; }
+        public string? StorageStatePath { get; set; }
     }
 }
+
+#nullable disable

@@ -1,129 +1,145 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageAddScriptTagTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageAddScriptTagTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageAddScriptTagTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-add-script-tag.spec.ts", "should throw an error if no options are provided")]
-        [Fact(Skip = "Not relevant for C#, js specific")]
+        [Test, Ignore("Not relevant for C#, js specific")]
         public void ShouldThrowAnErrorIfNoOptionsAreProvided()
         {
         }
 
         [PlaywrightTest("page-add-script-tag.spec.ts", "should work with a url")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithAUrl()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            var scriptHandle = await Page.AddScriptTagAsync(new PageAddScriptTagOptions { Url = "/injectedfile.js" });
+            await Page.GotoAsync(Server.EmptyPage);
+            var scriptHandle = await Page.AddScriptTagAsync(new() { Url = "/injectedfile.js" });
             Assert.NotNull(scriptHandle);
-            Assert.Equal(42, await Page.EvaluateAsync<int>("() => __injected"));
+            Assert.AreEqual(42, await Page.EvaluateAsync<int>("() => __injected"));
         }
 
         [PlaywrightTest("page-add-script-tag.spec.ts", "should work with a url and type=module")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithAUrlAndTypeModule()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            await Page.AddScriptTagAsync(new PageAddScriptTagOptions { Url = "/es6/es6import.js", Type = "module" });
-            Assert.Equal(42, await Page.EvaluateAsync<int>("() => __es6injected"));
+            await Page.GotoAsync(Server.EmptyPage);
+            await Page.AddScriptTagAsync(new() { Url = "/es6/es6import.js", Type = "module" });
+            Assert.AreEqual(42, await Page.EvaluateAsync<int>("() => __es6injected"));
         }
 
         [PlaywrightTest("page-add-script-tag.spec.ts", "should work with a path and type=module")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithAPathAndTypeModule()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            await Page.AddScriptTagAsync(new PageAddScriptTagOptions { Path = TestUtils.GetWebServerFile("es6/es6pathimport.js"), Type = "module" });
+            await Page.GotoAsync(Server.EmptyPage);
+            await Page.AddScriptTagAsync(new() { Path = TestUtils.GetWebServerFile("es6/es6pathimport.js"), Type = "module" });
             await Page.WaitForFunctionAsync("window.__es6injected");
-            Assert.Equal(42, await Page.EvaluateAsync<int>("() => __es6injected"));
+            Assert.AreEqual(42, await Page.EvaluateAsync<int>("() => __es6injected"));
         }
 
         [PlaywrightTest("page-add-script-tag.spec.ts", "should work with a content and type=module")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithAContentAndTypeModule()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            await Page.AddScriptTagAsync(new PageAddScriptTagOptions { Content = "import num from '/es6/es6module.js'; window.__es6injected = num;", Type = "module" });
+            await Page.GotoAsync(Server.EmptyPage);
+            await Page.AddScriptTagAsync(new() { Content = "import num from '/es6/es6module.js'; window.__es6injected = num;", Type = "module" });
             await Page.WaitForFunctionAsync("window.__es6injected");
-            Assert.Equal(42, await Page.EvaluateAsync<int>("() => __es6injected"));
+            Assert.AreEqual(42, await Page.EvaluateAsync<int>("() => __es6injected"));
         }
 
         [PlaywrightTest("page-add-script-tag.spec.ts", "should throw an error if loading from url fail")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldThrowAnErrorIfLoadingFromUrlFail()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            await Assert.ThrowsAsync<PlaywrightException>(() => Page.AddScriptTagAsync(new PageAddScriptTagOptions { Url = "/nonexistfile.js" }));
+            await Page.GotoAsync(Server.EmptyPage);
+            await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => Page.AddScriptTagAsync(new() { Url = "/nonexistfile.js" }));
         }
 
         [PlaywrightTest("page-add-script-tag.spec.ts", "should work with a path")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithAPath()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            var scriptHandle = await Page.AddScriptTagAsync(new PageAddScriptTagOptions { Path = TestUtils.GetWebServerFile("injectedfile.js") });
+            await Page.GotoAsync(Server.EmptyPage);
+            var scriptHandle = await Page.AddScriptTagAsync(new() { Path = TestUtils.GetWebServerFile("injectedfile.js") });
             Assert.NotNull(scriptHandle);
-            Assert.Equal(42, await Page.EvaluateAsync<int>("() => __injected"));
+            Assert.AreEqual(42, await Page.EvaluateAsync<int>("() => __injected"));
         }
 
         [PlaywrightTest("page-add-script-tag.spec.ts", "should include sourceURL when path is provided")]
-        [SkipBrowserAndPlatformFact(skipWebkit: true)]
+        [Test, SkipBrowserAndPlatform(skipWebkit: true)]
         public async Task ShouldIncludeSourceURLWhenPathIsProvided()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            await Page.AddScriptTagAsync(new PageAddScriptTagOptions { Path = TestUtils.GetWebServerFile("injectedfile.js") });
+            await Page.GotoAsync(Server.EmptyPage);
+            await Page.AddScriptTagAsync(new() { Path = TestUtils.GetWebServerFile("injectedfile.js") });
             string result = await Page.EvaluateAsync<string>("() => __injectedError.stack");
-            Assert.Contains(TestUtils.GetWebServerFile("injectedfile.js"), result);
+            StringAssert.Contains(TestUtils.GetWebServerFile("injectedfile.js"), result);
         }
 
         [PlaywrightTest("page-add-script-tag.spec.ts", "should work with content")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithContent()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            var scriptHandle = await Page.AddScriptTagAsync(new PageAddScriptTagOptions { Content = "window.__injected = 35;" });
+            await Page.GotoAsync(Server.EmptyPage);
+            var scriptHandle = await Page.AddScriptTagAsync(new() { Content = "window.__injected = 35;" });
             Assert.NotNull(scriptHandle);
-            Assert.Equal(35, await Page.EvaluateAsync<int>("() => __injected"));
+            Assert.AreEqual(35, await Page.EvaluateAsync<int>("() => __injected"));
         }
 
         [PlaywrightTest("page-add-script-tag.spec.ts", "should throw when added with content to the CSP page")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true)]
         public async Task ShouldThrowWhenAddedWithContentToTheCSPPage()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/csp.html");
-            await Assert.ThrowsAsync<PlaywrightException>(() =>
-                Page.AddScriptTagAsync(new PageAddScriptTagOptions { Content = "window.__injected = 35;" }));
+            await Page.GotoAsync(Server.Prefix + "/csp.html");
+            await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() =>
+                Page.AddScriptTagAsync(new() { Content = "window.__injected = 35;" }));
         }
 
         [PlaywrightTest("page-add-script-tag.spec.ts", "should throw when added with URL to the CSP page")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldThrowWhenAddedWithURLToTheCSPPage()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/csp.html");
-            await Assert.ThrowsAsync<PlaywrightException>(() =>
-                Page.AddScriptTagAsync(new PageAddScriptTagOptions { Url = TestConstants.CrossProcessUrl + "/injectedfile.js" }));
+            await Page.GotoAsync(Server.Prefix + "/csp.html");
+            await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() =>
+                Page.AddScriptTagAsync(new() { Url = Server.CrossProcessPrefix + "/injectedfile.js" }));
         }
 
         [PlaywrightTest("page-add-script-tag.spec.ts", "should throw a nice error when the request fails")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public async Task ShouldThrowANiceErrorWhenTheEequestFails()
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public async Task ShouldThrowANiceErrorWhenTheRequestFails()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            string url = TestConstants.ServerUrl + "/this_does_not_exists.js";
-            var exception = await Assert.ThrowsAsync<PlaywrightException>(() => Page.AddScriptTagAsync(new PageAddScriptTagOptions { Url = url }));
-            Assert.Contains(url, exception.Message);
+            await Page.GotoAsync(Server.EmptyPage);
+            string url = Server.Prefix + "/this_does_not_exists.js";
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => Page.AddScriptTagAsync(new() { Url = url }));
+            StringAssert.Contains(url, exception.Message);
         }
     }
 }

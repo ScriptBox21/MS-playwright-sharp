@@ -1,28 +1,45 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class EmulationFocusTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class EmulationFocusTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public EmulationFocusTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("emulation-focus.spec.ts", "should think that it is focused by default")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldThinkThatItIsFocusedByDefault()
         {
             Assert.True(await Page.EvaluateAsync<bool>("document.hasFocus()"));
         }
 
         [PlaywrightTest("emulation-focus.spec.ts", "should think that all pages are focused")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldThinkThatAllPagesAreFocused()
         {
             var page2 = await Page.Context.NewPageAsync();
@@ -31,15 +48,15 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("emulation-focus.spec.ts", "should focus popups by default")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFocusPopupsByDefault()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            var popupTask = Page.WaitForEventAsync(PageEvent.Popup);
+            await Page.GotoAsync(Server.EmptyPage);
+            var popupTask = Page.WaitForPopupAsync();
 
             await TaskUtils.WhenAll(
                 popupTask,
-                Page.EvaluateAsync("url => window.open(url)", TestConstants.EmptyPage));
+                Page.EvaluateAsync("url => window.open(url)", Server.EmptyPage));
 
             var popup = popupTask.Result;
 
@@ -48,14 +65,14 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("emulation-focus.spec.ts", "should provide target for keyboard events")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldProvideTargetForKeyboardEvents()
         {
             var page2 = await Page.Context.NewPageAsync();
 
             await TaskUtils.WhenAll(
-                Page.GotoAsync(TestConstants.ServerUrl + "/input/textarea.html"),
-                page2.GotoAsync(TestConstants.ServerUrl + "/input/textarea.html"));
+                Page.GotoAsync(Server.Prefix + "/input/textarea.html"),
+                page2.GotoAsync(Server.Prefix + "/input/textarea.html"));
 
             await TaskUtils.WhenAll(
                 Page.FocusAsync("input"),
@@ -72,12 +89,12 @@ namespace Microsoft.Playwright.Tests
                 Page.EvaluateAsync<string>("result"),
                 page2.EvaluateAsync<string>("result"));
 
-            Assert.Equal(text, results.Item1);
-            Assert.Equal(text2, results.Item2);
+            Assert.AreEqual(text, results.Item1);
+            Assert.AreEqual(text2, results.Item2);
         }
 
         [PlaywrightTest("emulation-focus.spec.ts", "should not affect mouse event target page")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldNotAffectMouseEventTargetPage()
         {
             var page2 = await Page.Context.NewPageAsync();
@@ -99,19 +116,19 @@ namespace Microsoft.Playwright.Tests
                 Page.EvaluateAsync<int>("window.clickCount"),
                 page2.EvaluateAsync<int>("window.clickCount"));
 
-            Assert.Equal(1, counters.Item1);
-            Assert.Equal(1, counters.Item2);
+            Assert.AreEqual(1, counters.Item1);
+            Assert.AreEqual(1, counters.Item2);
         }
 
         [PlaywrightTest("emulation-focus.spec.ts", "should change document.activeElement")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldChangeDocumentActiveElement()
         {
             var page2 = await Page.Context.NewPageAsync();
 
             await TaskUtils.WhenAll(
-                Page.GotoAsync(TestConstants.ServerUrl + "/input/textarea.html"),
-                page2.GotoAsync(TestConstants.ServerUrl + "/input/textarea.html"));
+                Page.GotoAsync(Server.Prefix + "/input/textarea.html"),
+                page2.GotoAsync(Server.Prefix + "/input/textarea.html"));
 
             await TaskUtils.WhenAll(
                 Page.FocusAsync("input"),
@@ -121,25 +138,25 @@ namespace Microsoft.Playwright.Tests
                 Page.EvaluateAsync<string>("document.activeElement.tagName"),
                 page2.EvaluateAsync<string>("document.activeElement.tagName"));
 
-            Assert.Equal("INPUT", results.Item1);
-            Assert.Equal("TEXTAREA", results.Item2);
+            Assert.AreEqual("INPUT", results.Item1);
+            Assert.AreEqual("TEXTAREA", results.Item2);
         }
 
         [PlaywrightTest("emulation-focus.spec.ts", "should not affect screenshots")]
-        [Fact(Skip = "We need screenshot features first")]
+        [Test, Ignore("We need screenshot features first")]
         public void ShouldNotAffectScreenshots()
         {
         }
 
         [PlaywrightTest("emulation-focus.spec.ts", "should change focused iframe")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldChangeFocusedIframe()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
 
             var (frame1, frame2) = await TaskUtils.WhenAll(
-                FrameUtils.AttachFrameAsync(Page, "frame1", TestConstants.ServerUrl + "/input/textarea.html"),
-                FrameUtils.AttachFrameAsync(Page, "frame2", TestConstants.ServerUrl + "/input/textarea.html"));
+                FrameUtils.AttachFrameAsync(Page, "frame1", Server.Prefix + "/input/textarea.html"),
+                FrameUtils.AttachFrameAsync(Page, "frame2", Server.Prefix + "/input/textarea.html"));
 
             string logger = @"function logger() {
               self._events = [];
@@ -163,8 +180,8 @@ namespace Microsoft.Playwright.Tests
                 frame1.EvaluateAsync<string[]>("self._events"),
                 frame2.EvaluateAsync<string[]>("self._events"));
 
-            Assert.Equal(new[] { "focus" }, events.Item1);
-            Assert.Empty(events.Item2);
+            Assert.AreEqual(new[] { "focus" }, events.Item1);
+            Assert.IsEmpty(events.Item2);
 
             focused = await TaskUtils.WhenAll(
                 frame1.EvaluateAsync<bool>("document.hasFocus()"),
@@ -178,8 +195,8 @@ namespace Microsoft.Playwright.Tests
                 frame1.EvaluateAsync<string[]>("self._events"),
                 frame2.EvaluateAsync<string[]>("self._events"));
 
-            Assert.Equal(new[] { "focus", "blur" }, events.Item1);
-            Assert.Equal(new[] { "focus" }, events.Item2);
+            Assert.AreEqual(new[] { "focus", "blur" }, events.Item1);
+            Assert.AreEqual(new[] { "focus" }, events.Item2);
 
             focused = await TaskUtils.WhenAll(
                 frame1.EvaluateAsync<bool>("document.hasFocus()"),

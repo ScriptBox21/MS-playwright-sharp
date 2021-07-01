@@ -1,21 +1,41 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Microsoft.Playwright.Tests.Helpers;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
     ///<playwright-file>download.spec.ts</playwright-file>
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class DownloadTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class DownloadTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public DownloadTests(ITestOutputHelper output) : base(output)
+        [SetUp]
+        public void Setup()
         {
             Server.SetRoute("/download", context =>
             {
@@ -33,48 +53,48 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("download.spec.ts", "should report downloads with acceptDownloads: false")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReportDownloadsWithAcceptDownloadsFalse()
         {
-            await Page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/downloadWithFilename\">download</a>");
-            var downloadTask = Page.WaitForEventAsync(PageEvent.Download);
+            await Page.SetContentAsync($"<a href=\"{Server.Prefix}/downloadWithFilename\">download</a>");
+            var downloadTask = Page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 downloadTask,
                 Page.ClickAsync("a"));
 
             var download = downloadTask.Result;
-            Assert.Equal($"{TestConstants.ServerUrl}/downloadWithFilename", download.Url);
-            Assert.Equal("file.txt", download.SuggestedFilename);
+            Assert.AreEqual($"{Server.Prefix}/downloadWithFilename", download.Url);
+            Assert.AreEqual("file.txt", download.SuggestedFilename);
 
-            var exception = await Assert.ThrowsAnyAsync<PlaywrightException>(() => download.PathAsync());
-            Assert.Contains("acceptDownloads", await download.FailureAsync());
-            Assert.Contains("acceptDownloads: true", exception.Message);
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => download.PathAsync());
+            StringAssert.Contains("acceptDownloads", await download.FailureAsync());
+            StringAssert.Contains("acceptDownloads: true", exception.Message);
         }
 
         [PlaywrightTest("download.spec.ts", "should report downloads with acceptDownloads: true")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReportDownloadsWithAcceptDownloadsTrue()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var download = await page.RunAndWaitForEventAsync(PageEvent.Download, async () =>
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
+            var download = await page.RunAndWaitForDownloadAsync(async () =>
             {
                 await page.ClickAsync("a");
             });
             string path = await download.PathAsync();
 
             Assert.True(new FileInfo(path).Exists);
-            Assert.Equal("Hello world", File.ReadAllText(path));
+            Assert.AreEqual("Hello world", File.ReadAllText(path));
         }
 
         [PlaywrightTest("download.spec.ts", "should save to user-specified path")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldSaveToUserSpecifiedPath()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var download = await page.RunAndWaitForEventAsync(PageEvent.Download, async () =>
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
+            var download = await page.RunAndWaitForDownloadAsync(async () =>
             {
                 await page.ClickAsync("a");
             });
@@ -84,18 +104,18 @@ namespace Microsoft.Playwright.Tests
             await download.SaveAsAsync(userPath);
 
             Assert.True(new FileInfo(userPath).Exists);
-            Assert.Equal("Hello world", File.ReadAllText(userPath));
+            Assert.AreEqual("Hello world", File.ReadAllText(userPath));
             await page.CloseAsync();
         }
 
         [PlaywrightTest("download.spec.ts", "should save to user-specified path without updating original path")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldSaveToUserSpecifiedPathWithoutUpdatingOriginalPath()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
 
-            var download = await page.RunAndWaitForEventAsync(PageEvent.Download, async () =>
+            var download = await page.RunAndWaitForDownloadAsync(async () =>
             {
                 await page.ClickAsync("a");
             });
@@ -105,23 +125,23 @@ namespace Microsoft.Playwright.Tests
             await download.SaveAsAsync(userPath);
 
             Assert.True(new FileInfo(userPath).Exists);
-            Assert.Equal("Hello world", File.ReadAllText(userPath));
+            Assert.AreEqual("Hello world", File.ReadAllText(userPath));
 
             string originalPath = await download.PathAsync();
             Assert.True(new FileInfo(originalPath).Exists);
-            Assert.Equal("Hello world", File.ReadAllText(originalPath));
+            Assert.AreEqual("Hello world", File.ReadAllText(originalPath));
 
             await page.CloseAsync();
         }
 
         [PlaywrightTest("download.spec.ts", "should save to two different paths with multiple saveAs calls")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldSaveToTwoDifferentPathsWithMultipleSaveAsCalls()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
 
-            var download = await page.RunAndWaitForEventAsync(PageEvent.Download, async () =>
+            var download = await page.RunAndWaitForDownloadAsync(async () =>
             {
                 await page.ClickAsync("a");
             });
@@ -130,23 +150,23 @@ namespace Microsoft.Playwright.Tests
             string userPath = Path.Combine(tmpDir.Path, "download.txt");
             await download.SaveAsAsync(userPath);
             Assert.True(new FileInfo(userPath).Exists);
-            Assert.Equal("Hello world", File.ReadAllText(userPath));
+            Assert.AreEqual("Hello world", File.ReadAllText(userPath));
 
             string anotherUserPath = Path.Combine(tmpDir.Path, "download (2).txt");
             await download.SaveAsAsync(anotherUserPath);
             Assert.True(new FileInfo(anotherUserPath).Exists);
-            Assert.Equal("Hello world", File.ReadAllText(anotherUserPath));
+            Assert.AreEqual("Hello world", File.ReadAllText(anotherUserPath));
 
             await page.CloseAsync();
         }
 
         [PlaywrightTest("download.spec.ts", "should save to overwritten filepath")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldSaveToOverwrittenFilepath()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var downloadTask = page.WaitForEventAsync(PageEvent.Download);
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
+            var downloadTask = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 downloadTask,
@@ -156,20 +176,20 @@ namespace Microsoft.Playwright.Tests
             string userPath = Path.Combine(tmpDir.Path, "download.txt");
             var download = downloadTask.Result;
             await download.SaveAsAsync(userPath);
-            Assert.Single(new DirectoryInfo(tmpDir.Path).GetFiles());
+            Assert.AreEqual(1, new DirectoryInfo(tmpDir.Path).GetFiles().Length);
             await download.SaveAsAsync(userPath);
-            Assert.Single(new DirectoryInfo(tmpDir.Path).GetFiles());
+            Assert.AreEqual(1, new DirectoryInfo(tmpDir.Path).GetFiles().Length);
 
             await page.CloseAsync();
         }
 
         [PlaywrightTest("download.spec.ts", "should create subdirectories when saving to non-existent user-specified path")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldCreateSubdirectoriesWhenSavingToNonExistentUserSpecifiedPath()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var downloadTask = page.WaitForEventAsync(PageEvent.Download);
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
+            var downloadTask = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 downloadTask,
@@ -180,24 +200,24 @@ namespace Microsoft.Playwright.Tests
             var download = downloadTask.Result;
             await download.SaveAsAsync(userPath);
             Assert.True(new FileInfo(userPath).Exists);
-            Assert.Equal("Hello world", File.ReadAllText(userPath));
+            Assert.AreEqual("Hello world", File.ReadAllText(userPath));
 
             await page.CloseAsync();
         }
 
         [PlaywrightTest("download.spec.ts", "should save when connected remotely")]
-        [Fact(Skip = "SKIP WIRE")]
+        [Test, Ignore("SKIP WIRE")]
         public void ShouldSaveWhenConnectedRemotely()
         {
         }
 
         [PlaywrightTest("download.spec.ts", "should error when saving with downloads disabled")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldErrorWhenSavingWithDownloadsDisabled()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = false });
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var downloadTask = page.WaitForEventAsync(PageEvent.Download);
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = false });
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
+            var downloadTask = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 downloadTask,
@@ -207,17 +227,17 @@ namespace Microsoft.Playwright.Tests
             string userPath = Path.Combine(tmpDir.Path, "download.txt");
             var download = downloadTask.Result;
 
-            var exception = await Assert.ThrowsAnyAsync<PlaywrightException>(() => download.SaveAsAsync(userPath));
-            Assert.Contains("Pass { acceptDownloads: true } when you are creating your browser context", exception.Message);
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => download.SaveAsAsync(userPath));
+            StringAssert.Contains("Pass { acceptDownloads: true } when you are creating your browser context", exception.Message);
         }
 
         [PlaywrightTest("download.spec.ts", "should error when saving after deletion")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldErrorWhenSavingAfterDeletion()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var downloadTask = page.WaitForEventAsync(PageEvent.Download);
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
+            var downloadTask = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 downloadTask,
@@ -227,18 +247,18 @@ namespace Microsoft.Playwright.Tests
             string userPath = Path.Combine(tmpDir.Path, "download.txt");
             var download = downloadTask.Result;
             await download.DeleteAsync();
-            var exception = await Assert.ThrowsAnyAsync<PlaywrightException>(() => download.SaveAsAsync(userPath));
-            Assert.Contains("Target page, context or browser has been closed", exception.Message);
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => download.SaveAsAsync(userPath));
+            StringAssert.Contains("Target page, context or browser has been closed", exception.Message);
         }
 
         [PlaywrightTest("download.spec.ts", "should error when saving after deletion when connected remotely")]
-        [Fact(Skip = "SKIP WIRE")]
+        [Test, Ignore("SKIP WIRE")]
         public void ShouldErrorWhenSavingAfterDeletionWhenConnectedRemotely()
         {
         }
 
         [PlaywrightTest("download.spec.ts", "should report non-navigation downloads")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReportNonNavigationDownloads()
         {
             Server.SetRoute("/download", context =>
@@ -247,64 +267,64 @@ namespace Microsoft.Playwright.Tests
                 return context.Response.WriteAsync("Hello world");
             });
 
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.GotoAsync(TestConstants.EmptyPage);
-            await page.SetContentAsync($"<a download=\"file.txt\" href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var downloadTask = page.WaitForEventAsync(PageEvent.Download);
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.GotoAsync(Server.EmptyPage);
+            await page.SetContentAsync($"<a download=\"file.txt\" href=\"{Server.Prefix}/download\">download</a>");
+            var downloadTask = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 downloadTask,
                 page.ClickAsync("a"));
 
             var download = downloadTask.Result;
-            Assert.Equal("file.txt", download.SuggestedFilename);
+            Assert.AreEqual("file.txt", download.SuggestedFilename);
             string path = await download.PathAsync();
 
             Assert.True(new FileInfo(path).Exists);
-            Assert.Equal("Hello world", File.ReadAllText(path));
+            Assert.AreEqual("Hello world", File.ReadAllText(path));
             await page.CloseAsync();
         }
 
         [PlaywrightTest("download.spec.ts", "should report download path within page.on('download', …) handler for Files")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReportDownloadPathWithinPageOnDownloadHandlerForFiles()
         {
             var downloadPathTcs = new TaskCompletionSource<string>();
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
             page.Download += async (_, e) =>
             {
                 downloadPathTcs.TrySetResult(await e.PathAsync());
             };
 
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
             await page.ClickAsync("a");
             string path = await downloadPathTcs.Task;
 
-            Assert.Equal("Hello world", File.ReadAllText(path));
+            Assert.AreEqual("Hello world", File.ReadAllText(path));
             await page.CloseAsync();
         }
 
         [PlaywrightTest("download.spec.ts", "should report download path within page.on('download', …) handler for Blobs")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReportDownloadPathWithinPageOnDownloadHandlerForBlobs()
         {
             var downloadPathTcs = new TaskCompletionSource<string>();
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
             page.Download += async (_, e) =>
             {
                 downloadPathTcs.TrySetResult(await e.PathAsync());
             };
 
-            await page.GotoAsync(TestConstants.ServerUrl + "/download-blob.html");
+            await page.GotoAsync(Server.Prefix + "/download-blob.html");
             await page.ClickAsync("a");
             string path = await downloadPathTcs.Task;
 
-            Assert.Equal("Hello world", File.ReadAllText(path));
+            Assert.AreEqual("Hello world", File.ReadAllText(path));
             await page.CloseAsync();
         }
 
         [PlaywrightTest("download.spec.ts", "should report alt-click downloads")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldReportAltClickDownloads()
         {
             Server.SetRoute("/download", context =>
@@ -313,28 +333,28 @@ namespace Microsoft.Playwright.Tests
                 return context.Response.WriteAsync("Hello world");
             });
 
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var downloadTask = page.WaitForEventAsync(PageEvent.Download);
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
+            var downloadTask = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 downloadTask,
-                page.ClickAsync("a", new PageClickOptions { Modifiers = new[] { KeyboardModifier.Alt } }));
+                page.ClickAsync("a", new() { Modifiers = new[] { KeyboardModifier.Alt } }));
 
             var download = downloadTask.Result;
             string path = await download.PathAsync();
 
             Assert.True(new FileInfo(path).Exists);
-            Assert.Equal("Hello world", File.ReadAllText(path));
+            Assert.AreEqual("Hello world", File.ReadAllText(path));
         }
 
         [PlaywrightTest("download.spec.ts", "should report new window downloads")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReportNewWindowDownloads()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a target=_blank href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var downloadTask = page.WaitForEventAsync(PageEvent.Download);
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a target=_blank href=\"{Server.Prefix}/download\">download</a>");
+            var downloadTask = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 downloadTask,
@@ -344,16 +364,16 @@ namespace Microsoft.Playwright.Tests
             string path = await download.PathAsync();
 
             Assert.True(new FileInfo(path).Exists);
-            Assert.Equal("Hello world", File.ReadAllText(path));
+            Assert.AreEqual("Hello world", File.ReadAllText(path));
         }
 
         [PlaywrightTest("download.spec.ts", "should delete file")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldDeleteFile()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a target=_blank href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var downloadTask = page.WaitForEventAsync(PageEvent.Download);
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a target=_blank href=\"{Server.Prefix}/download\">download</a>");
+            var downloadTask = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 downloadTask,
@@ -369,12 +389,12 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("download.spec.ts", "should expose stream")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldExposeStream()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a target=_blank href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var downloadTask = page.WaitForEventAsync(PageEvent.Download);
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a target=_blank href=\"{Server.Prefix}/download\">download</a>");
+            var downloadTask = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 downloadTask,
@@ -382,24 +402,24 @@ namespace Microsoft.Playwright.Tests
 
             var download = downloadTask.Result;
             using var stream = await download.CreateReadStreamAsync();
-            Assert.Equal("Hello world", await new StreamReader(stream).ReadToEndAsync());
+            Assert.AreEqual("Hello world", await new StreamReader(stream).ReadToEndAsync());
 
             await page.CloseAsync();
         }
 
         [PlaywrightTest("download.spec.ts", "should delete downloads on context destruction")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldDeleteDownloadsOnContextDestruction()
         {
-            var page = await Browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var download1Task = page.WaitForEventAsync(PageEvent.Download);
+            var page = await Browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
+            var download1Task = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 download1Task,
                 page.ClickAsync("a"));
 
-            var download2Task = page.WaitForEventAsync(PageEvent.Download);
+            var download2Task = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 download2Task,
@@ -415,19 +435,19 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("download.spec.ts", "should delete downloads on browser gone")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldDeleteDownloadsOnBrowserGone()
         {
-            var browser = await BrowserType.LaunchDefaultAsync();
-            var page = await browser.NewPageAsync(new BrowserNewPageOptions { AcceptDownloads = true });
-            await page.SetContentAsync($"<a href=\"{TestConstants.ServerUrl}/download\">download</a>");
-            var download1Task = page.WaitForEventAsync(PageEvent.Download);
+            var browser = await BrowserType.LaunchAsync();
+            var page = await browser.NewPageAsync(new() { AcceptDownloads = true });
+            await page.SetContentAsync($"<a href=\"{Server.Prefix}/download\">download</a>");
+            var download1Task = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 download1Task,
                 page.ClickAsync("a"));
 
-            var download2Task = page.WaitForEventAsync(PageEvent.Download);
+            var download2Task = page.WaitForDownloadAsync();
 
             await TaskUtils.WhenAll(
                 download2Task,

@@ -1,3 +1,27 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,7 +44,7 @@ namespace Microsoft.Playwright.Transport
         {
             _process = process;
             _logger = loggerFactory?.CreateLogger<StdIOTransport>();
-            process.ErrorDataReceived += (_, e) => LogReceived?.Invoke(this, new LogReceivedEventArgs(e.Data));
+            process.ErrorDataReceived += (_, e) => LogReceived?.Invoke(this, new(e.Data));
             process.BeginErrorReadLine();
 
             ScheduleTransportTask(GetResponseAsync, _readerCancellationSource.Token);
@@ -50,7 +74,7 @@ namespace Microsoft.Playwright.Transport
             if (!IsClosed)
             {
                 IsClosed = true;
-                TransportClosed?.Invoke(this, new TransportClosedEventArgs { CloseReason = closeReason });
+                TransportClosed?.Invoke(this, new() { CloseReason = closeReason });
                 _readerCancellationSource.Cancel();
             }
         }
@@ -75,8 +99,8 @@ namespace Microsoft.Playwright.Transport
                     await _process.StandardInput.BaseStream.WriteAsync(bytes, 0, len, _readerCancellationSource.Token).ConfigureAwait(false);
 #pragma warning restore CA1835
 #else
-                    await _process.StandardInput.BaseStream.WriteAsync(new ReadOnlyMemory<byte>(ll, 0, 4), _readerCancellationSource.Token).ConfigureAwait(false);
-                    await _process.StandardInput.BaseStream.WriteAsync(new ReadOnlyMemory<byte>(bytes, 0, len), _readerCancellationSource.Token).ConfigureAwait(false);
+                    await _process.StandardInput.BaseStream.WriteAsync(new(ll, 0, 4), _readerCancellationSource.Token).ConfigureAwait(false);
+                    await _process.StandardInput.BaseStream.WriteAsync(new(bytes, 0, len), _readerCancellationSource.Token).ConfigureAwait(false);
 #endif
                     await _process.StandardInput.BaseStream.FlushAsync(_readerCancellationSource.Token).ConfigureAwait(false);
                 }
@@ -119,7 +143,7 @@ namespace Microsoft.Playwright.Transport
                     int read = await stream.BaseStream.ReadAsync(buffer, 0, DefaultBufferSize, token).ConfigureAwait(false);
 #pragma warning restore CA1835
 #else
-                    int read = await stream.BaseStream.ReadAsync(new Memory<byte>(buffer, 0, DefaultBufferSize), token).ConfigureAwait(false);
+                    int read = await stream.BaseStream.ReadAsync(new(buffer, 0, DefaultBufferSize), token).ConfigureAwait(false);
 #endif
                     if (!token.IsCancellationRequested)
                     {
@@ -159,7 +183,7 @@ namespace Microsoft.Playwright.Transport
                 string result = System.Text.Encoding.UTF8.GetString(_data.GetRange(0, _currentMessageSize.Value).ToArray());
                 _data.RemoveRange(0, _currentMessageSize.Value);
                 _currentMessageSize = null;
-                MessageReceived?.Invoke(this, new MessageReceivedEventArgs(result));
+                MessageReceived?.Invoke(this, new(result));
             }
         }
     }

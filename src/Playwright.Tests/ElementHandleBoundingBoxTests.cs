@@ -1,39 +1,55 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class ElementHandleBoundingBoxTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class ElementHandleBoundingBoxTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public ElementHandleBoundingBoxTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("elementhandle-bounding-box.spec.ts", "should work")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWork()
         {
             await Page.SetViewportSizeAsync(500, 500);
-            await Page.GotoAsync(TestConstants.ServerUrl + "/grid.html");
+            await Page.GotoAsync(Server.Prefix + "/grid.html");
             var elementHandle = await Page.QuerySelectorAsync(".box:nth-of-type(13)");
             var box = await elementHandle.BoundingBoxAsync();
             AssertEqual(100, 50, 50, 50, box);
         }
 
         [PlaywrightTest("elementhandle-bounding-box.spec.ts", "should handle nested frames")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldHandleNestedFrames()
         {
             await Page.SetViewportSizeAsync(500, 500);
-            await Page.GotoAsync(TestConstants.ServerUrl + "/frames/nested-frames.html");
+            await Page.GotoAsync(Server.Prefix + "/frames/nested-frames.html");
             var nestedFrame = Page.Frames.First(frame => frame.Name == "dos");
             var elementHandle = await nestedFrame.QuerySelectorAsync("div");
             var box = await elementHandle.BoundingBoxAsync();
@@ -41,7 +57,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("elementhandle-bounding-box.spec.ts", "should return null for invisible elements")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReturnNullForInvisibleElements()
         {
             await Page.SetContentAsync("<div style=\"display:none\">hi</div>");
@@ -50,7 +66,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("elementhandle-bounding-box.spec.ts", "should force a layout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldForceALayout()
         {
             await Page.SetViewportSizeAsync(500, 500);
@@ -62,7 +78,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("elementhandle-bounding-box.spec.ts", "should work with SVG nodes")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithSVGNodes()
         {
             await Page.SetContentAsync(@"
@@ -79,12 +95,12 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("elementhandle-bounding-box.spec.ts", "should work with page scale")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true)]
         public async Task ShouldWorkWithPageScale()
         {
-            var context = await Browser.NewContextAsync(new BrowserNewContextOptions
+            var context = await Browser.NewContextAsync(new()
             {
-                ViewportSize = new ViewportSize
+                ViewportSize = new()
                 {
                     Height = 400,
                     Width = 400,
@@ -92,7 +108,7 @@ namespace Microsoft.Playwright.Tests
                 IsMobile = true,
             });
             var page = await context.NewPageAsync();
-            await page.GotoAsync(TestConstants.ServerUrl + "/input/button.html");
+            await page.GotoAsync(Server.Prefix + "/input/button.html");
             var button = await page.QuerySelectorAsync("button");
 
             await button.EvaluateAsync(@"button => {
@@ -105,14 +121,14 @@ namespace Microsoft.Playwright.Tests
             }");
 
             var box = await button.BoundingBoxAsync();
-            Assert.Equal(17 * 100, Math.Round(box.X * 100));
-            Assert.Equal(23 * 100, Math.Round(box.Y * 100));
-            Assert.Equal(200 * 100, Math.Round(box.Width * 100));
-            Assert.Equal(20 * 100, Math.Round(box.Height * 100));
+            Assert.AreEqual(17 * 100, Math.Round(box.X * 100));
+            Assert.AreEqual(23 * 100, Math.Round(box.Y * 100));
+            Assert.AreEqual(200 * 100, Math.Round(box.Width * 100));
+            Assert.AreEqual(20 * 100, Math.Round(box.Height * 100));
         }
 
         [PlaywrightTest("elementhandle-bounding-box.spec.ts", "should work when inline box child is outside of viewport")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWhenInlineBoxChildIsOutsideOfViewport()
         {
             await Page.SetContentAsync(@"
@@ -135,26 +151,26 @@ namespace Microsoft.Playwright.Tests
                     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height};
                 }", handle);
 
-            Assert.Equal(Math.Round(webBoundingBox.X * 100), Math.Round(box.X * 100));
-            Assert.Equal(Math.Round(webBoundingBox.Y * 100), Math.Round(box.Y * 100));
-            Assert.Equal(Math.Round(webBoundingBox.Width * 100), Math.Round(box.Width * 100));
-            Assert.Equal(Math.Round(webBoundingBox.Height * 100), Math.Round(box.Height * 100));
+            Assert.AreEqual(Math.Round(webBoundingBox.X * 100), Math.Round(box.X * 100));
+            Assert.AreEqual(Math.Round(webBoundingBox.Y * 100), Math.Round(box.Y * 100));
+            Assert.AreEqual(Math.Round(webBoundingBox.Width * 100), Math.Round(box.Width * 100));
+            Assert.AreEqual(Math.Round(webBoundingBox.Height * 100), Math.Round(box.Height * 100));
         }
 
         private static void AssertEqual(float X, float Y, float Width, float Height, ElementHandleBoundingBoxResult box)
         {
-            Assert.Equal(X, box.X);
-            Assert.Equal(Y, box.Y);
-            Assert.Equal(Width, box.Width);
-            Assert.Equal(Height, box.Height);
+            Assert.AreEqual(X, box.X);
+            Assert.AreEqual(Y, box.Y);
+            Assert.AreEqual(Width, box.Width);
+            Assert.AreEqual(Height, box.Height);
         }
 
         private static void AssertEqual(ElementHandleBoundingBoxResult boxA, ElementHandleBoundingBoxResult boxB)
         {
-            Assert.Equal(boxA.X, boxB.X);
-            Assert.Equal(boxA.Y, boxB.Y);
-            Assert.Equal(boxA.Width, boxB.Width);
-            Assert.Equal(boxA.Height, boxB.Height);
+            Assert.AreEqual(boxA.X, boxB.X);
+            Assert.AreEqual(boxA.Y, boxB.Y);
+            Assert.AreEqual(boxA.Width, boxB.Width);
+            Assert.AreEqual(boxA.Height, boxB.Height);
         }
     }
 }

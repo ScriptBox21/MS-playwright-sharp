@@ -24,6 +24,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -33,6 +34,8 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+
+#nullable enable
 
 namespace Microsoft.Playwright
 {
@@ -45,6 +48,7 @@ namespace Microsoft.Playwright
             if (clone == null) return;
             Media = clone.Media;
             ColorScheme = clone.ColorScheme;
+            ReducedMotion = clone.ReducedMotion;
         }
 
         /// <summary>
@@ -65,5 +69,16 @@ namespace Microsoft.Playwright
         /// </summary>
         [JsonPropertyName("colorScheme")]
         public ColorScheme? ColorScheme { get; set; }
+
+        /// <summary>
+        /// <para>
+        /// Emulates <c>'prefers-reduced-motion'</c> media feature, supported values are <c>'reduce'</c>,
+        /// <c>'no-preference'</c>. Passing <c>null</c> disables reduced motion emulation.
+        /// </para>
+        /// </summary>
+        [JsonPropertyName("reducedMotion")]
+        public ReducedMotion? ReducedMotion { get; set; }
     }
 }
+
+#nullable disable

@@ -1,22 +1,40 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2020 Darío Kondratiuk
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageWaitForFunctionTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageWaitForFunctionTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageWaitForFunctionTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-wait-for-function.spec.ts", "should timeout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldTimeout()
         {
             var startTime = DateTime.Now;
@@ -26,16 +44,16 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should accept a string")]
-        [Fact(Skip = "We don't this test")]
+        [Test, Ignore("We don't this test")]
         public void ShouldAcceptAString()
         {
         }
 
         [PlaywrightTest("page-wait-for-function.spec.tsPageWaitForFunctionTests", "should work when resolved right before execution context disposal")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWhenResolvedRightBeforeExecutionContextDisposal()
         {
-            await Page.AddInitScriptAsync("() => window.__RELOADED = true");
+            await Page.AddInitScriptAsync("window.__RELOADED = true");
             await Page.WaitForFunctionAsync(@"() =>
             {
                 if (!window.__RELOADED)
@@ -45,7 +63,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should poll on interval")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldPollOnInterval()
         {
             int polling = 100;
@@ -55,41 +73,41 @@ namespace Microsoft.Playwright.Tests
                     return false;
                 }
                 return Date.now() - window.__startTime;
-            }", null, new PageWaitForFunctionOptions { PollingInterval = polling });
+            }", null, new() { PollingInterval = polling });
             int value = (await timeDelta.JsonValueAsync<int>());
 
             Assert.True(value >= polling);
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should avoid side effects after timeout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldAvoidSideEffectsAfterTimeout()
         {
             int counter = 0;
             Page.Console += (_, _) => ++counter;
 
-            var exception = await Assert.ThrowsAnyAsync<TimeoutException>(() => Page.WaitForFunctionAsync(
+            var exception = await PlaywrightAssert.ThrowsAsync<TimeoutException>(() => Page.WaitForFunctionAsync(
                 @"() => {
                   window.counter = (window.counter || 0) + 1;
                   console.log(window.counter);
                 }",
-                null, new PageWaitForFunctionOptions { PollingInterval = 1, Timeout = 1000 }));
+                null, new() { PollingInterval = 1, Timeout = 1000 }));
 
             int savedCounter = counter;
             await Page.WaitForTimeoutAsync(2000);
 
-            Assert.Contains("Timeout 1000ms exceeded", exception.Message);
-            Assert.Equal(savedCounter, counter);
+            StringAssert.Contains("Timeout 1000ms exceeded", exception.Message);
+            Assert.AreEqual(savedCounter, counter);
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should throw on polling:mutation")]
-        [Fact(Skip = "We don't need to test this")]
+        [Test, Ignore("We don't need to test this")]
         public void ShouldThrowOnPollingMutation()
         {
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should poll on raf")]
-        [Fact(Skip = "We don't support raf")]
+        [Test, Ignore("We don't support raf")]
         public void ShouldPollOnRaf()
         {
             /*
@@ -102,41 +120,41 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should fail with predicate throwing on first call")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFailWithPredicateThrowingOnFirstCall()
         {
-            var exception = await Assert.ThrowsAnyAsync<PlaywrightException>(() => Page.WaitForFunctionAsync("() => { throw new Error('oh my'); }"));
-            Assert.Contains("oh my", exception.Message);
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => Page.WaitForFunctionAsync("() => { throw new Error('oh my'); }"));
+            StringAssert.Contains("oh my", exception.Message);
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should fail with predicate throwing sometimes")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFailWithPredicateThrowingSometimes()
         {
-            var exception = await Assert.ThrowsAnyAsync<PlaywrightException>(() => Page.WaitForFunctionAsync(@"() => {
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => Page.WaitForFunctionAsync(@"() => {
               window.counter = (window.counter || 0) + 1;
               if (window.counter === 3)
                 throw new Error('Bad counter!');
               return window.counter === 5 ? 'result' : false;
             }"));
-            Assert.Contains("Bad counter!", exception.Message);
+            StringAssert.Contains("Bad counter!", exception.Message);
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should fail with ReferenceError on wrong page")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFailWithReferenceErrorOnWrongPage()
         {
-            var exception = await Assert.ThrowsAnyAsync<PlaywrightException>(() => Page.WaitForFunctionAsync("() => globalVar === 123"));
-            Assert.Contains("globalVar", exception.Message);
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => Page.WaitForFunctionAsync("() => globalVar === 123"));
+            StringAssert.Contains("globalVar", exception.Message);
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should work with strict CSP policy")]
-        [Fact(Skip = "We don't support raf")]
+        [Test, Ignore("We don't support raf")]
         public void ShouldWorkWithStrictCSPPolicy()
         {
             /*
-            Server.SetCSP("/empty.html", "script-src " + TestConstants.ServerUrl);
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            Server.SetCSP("/empty.html", "script-src " + Server.Prefix);
+            await Page.GotoAsync(Server.EmptyPage);
             await TaskUtils.WhenAll(
                 Page.WaitForFunctionAsync(
                     "() => window.__FOO === 'hit'",
@@ -146,33 +164,33 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should throw on bad polling value")]
-        [Fact(Skip = "We don't this test")]
+        [Test, Ignore("We don't this test")]
         public void ShouldThrowOnBadPollingValue()
         {
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should throw negative polling interval")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldThrowNegativePollingInterval()
         {
-            var exception = await Assert.ThrowsAsync<PlaywrightException>(()
-                => Page.WaitForFunctionAsync("() => !!document.body", null, new PageWaitForFunctionOptions { PollingInterval = -10 }));
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(()
+                => Page.WaitForFunctionAsync("() => !!document.body", null, new() { PollingInterval = -10 }));
 
-            Assert.Contains("Cannot poll with non-positive interval", exception.Message);
+            StringAssert.Contains("Cannot poll with non-positive interval", exception.Message);
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should return the success value as a JSHandle")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReturnTheSuccessValueAsAJSHandle()
-            => Assert.Equal(5, await (await Page.WaitForFunctionAsync("() => 5")).JsonValueAsync<int>());
+            => Assert.AreEqual(5, await (await Page.WaitForFunctionAsync("() => 5")).JsonValueAsync<int>());
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should return the window as a success value")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReturnTheWindowAsASuccessValue()
             => Assert.NotNull(await Page.WaitForFunctionAsync("() => window"));
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should accept ElementHandle arguments")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldAcceptElementHandleArguments()
         {
             await Page.SetContentAsync("<div></div>");
@@ -186,28 +204,28 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should respect timeout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldRespectTimeout()
         {
-            var exception = await Assert.ThrowsAsync<TimeoutException>(()
-                => Page.WaitForFunctionAsync("false", null, new PageWaitForFunctionOptions { Timeout = 10 }));
+            var exception = await PlaywrightAssert.ThrowsAsync<TimeoutException>(()
+                => Page.WaitForFunctionAsync("false", null, new() { Timeout = 10 }));
 
-            Assert.Contains("Timeout 10ms exceeded", exception.Message);
+            StringAssert.Contains("Timeout 10ms exceeded", exception.Message);
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should respect default timeout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldRespectDefaultTimeout()
         {
             Page.SetDefaultTimeout(1);
-            var exception = await Assert.ThrowsAsync<TimeoutException>(()
+            var exception = await PlaywrightAssert.ThrowsAsync<TimeoutException>(()
                 => Page.WaitForFunctionAsync("false"));
 
-            Assert.Contains("Timeout 1ms exceeded", exception.Message);
+            StringAssert.Contains("Timeout 1ms exceeded", exception.Message);
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should disable timeout when its set to 0")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldDisableTimeoutWhenItsSetTo0()
         {
             var watchdog = Page.WaitForFunctionAsync(
@@ -216,7 +234,7 @@ namespace Microsoft.Playwright.Tests
                     return window.__injected;
                 }",
                 null,
-                new PageWaitForFunctionOptions
+                new()
                 {
                     PollingInterval = 10,
                     Timeout = 0
@@ -227,17 +245,17 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should survive cross-process navigation")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldSurviveCrossProcessNavigation()
         {
             bool fooFound = false;
             var waitForFunction = Page.WaitForFunctionAsync("window.__FOO === 1")
                 .ContinueWith(_ => fooFound = true);
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
             Assert.False(fooFound);
             await Page.ReloadAsync();
             Assert.False(fooFound);
-            await Page.GotoAsync(TestConstants.CrossProcessUrl + "/grid.html");
+            await Page.GotoAsync(Server.CrossProcessPrefix + "/grid.html");
             Assert.False(fooFound);
             await Page.EvaluateAsync("window.__FOO = 1");
             await waitForFunction;
@@ -245,18 +263,18 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should survive navigations")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldSurviveNavigations()
         {
             var watchdog = Page.WaitForFunctionAsync("() => window.__done");
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            await Page.GotoAsync(TestConstants.ServerUrl + "/consolelog.html");
+            await Page.GotoAsync(Server.EmptyPage);
+            await Page.GotoAsync(Server.Prefix + "/consolelog.html");
             await Page.EvaluateAsync("() => window.__done = true");
             await watchdog;
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should work with multiline body")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithMultilineBody()
         {
             var result = await Page.WaitForFunctionAsync(@"
@@ -267,7 +285,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-wait-for-function.spec.ts", "should wait for predicate with arguments")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public Task ShouldWaitForPredicateWithArguments()
             => Page.WaitForFunctionAsync(@"({arg1, arg2}) => arg1 + arg2 === 3", new { arg1 = 1, arg2 = 2 });
     }

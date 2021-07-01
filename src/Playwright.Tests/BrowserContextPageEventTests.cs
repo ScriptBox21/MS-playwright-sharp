@@ -1,132 +1,147 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Helpers;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class BrowserContextPageEventTests : PlaywrightSharpBrowserBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class BrowserContextPageEventTests : BrowserTestEx
     {
-        /// <inheritdoc/>
-        public BrowserContextPageEventTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("browsercontext-page-event.spec.ts", "should have url")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldHaveUrl()
         {
             await using var context = await Browser.NewContextAsync();
             var page = await context.NewPageAsync();
 
             var (otherPage, _) = await TaskUtils.WhenAll(
-                context.WaitForEventAsync(BrowserContextEvent.Page),
-                page.EvaluateAsync("url => window.open(url)", TestConstants.EmptyPage));
+                context.WaitForPageAsync(),
+                page.EvaluateAsync("url => window.open(url)", Server.EmptyPage));
 
-            Assert.Equal(TestConstants.EmptyPage, otherPage.Url);
+            Assert.AreEqual(Server.EmptyPage, otherPage.Url);
         }
 
         [PlaywrightTest("browsercontext-page-event.spec.ts", "should have url after domcontentloaded")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldHaveUrlAfterDomcontentloaded()
         {
             await using var context = await Browser.NewContextAsync();
             var page = await context.NewPageAsync();
 
             var (otherPage, _) = await TaskUtils.WhenAll(
-                context.WaitForEventAsync(BrowserContextEvent.Page),
-                page.EvaluateAsync("url => window.open(url)", TestConstants.EmptyPage));
+                context.WaitForPageAsync(),
+                page.EvaluateAsync("url => window.open(url)", Server.EmptyPage));
 
             await otherPage.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-            Assert.Equal(TestConstants.EmptyPage, otherPage.Url);
+            Assert.AreEqual(Server.EmptyPage, otherPage.Url);
         }
 
         [PlaywrightTest("browsercontext-page-event.spec.ts", "should have about:blank url with domcontentloaded")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldHaveAboutBlankUrlWithDomcontentloaded()
         {
             await using var context = await Browser.NewContextAsync();
             var page = await context.NewPageAsync();
 
-            var otherPage = await context.RunAndWaitForEventAsync(BrowserContextEvent.Page, async () =>
+            var otherPage = await context.RunAndWaitForPageAsync(async () =>
             {
                 await page.EvaluateAsync("url => window.open(url)", "about:blank");
             });
             await otherPage.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-            Assert.Equal("about:blank", otherPage.Url);
+            Assert.AreEqual("about:blank", otherPage.Url);
         }
 
         [PlaywrightTest("browsercontext-page-event.spec.ts", "should have about:blank for empty url with domcontentloaded")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldHaveAboutBlankUrlForEmptyUrlWithDomcontentloaded()
         {
             await using var context = await Browser.NewContextAsync();
             var page = await context.NewPageAsync();
 
-            var otherPage = await context.RunAndWaitForEventAsync(BrowserContextEvent.Page, async () =>
+            var otherPage = await context.RunAndWaitForPageAsync(async () =>
             {
                 await page.EvaluateAsync("() => window.open()");
             });
             await otherPage.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-            Assert.Equal("about:blank", otherPage.Url);
+            Assert.AreEqual("about:blank", otherPage.Url);
         }
 
         [PlaywrightTest("browsercontext-page-event.spec.ts", "should report when a new page is created and closed")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReportWhenANewPageIsCreatedAndClosed()
         {
             await using var context = await Browser.NewContextAsync();
             var page = await context.NewPageAsync();
 
-            var otherPage = await context.RunAndWaitForEventAsync(BrowserContextEvent.Page, async () =>
+            var otherPage = await context.RunAndWaitForPageAsync(async () =>
             {
-                await page.EvaluateAsync("url => window.open(url)", TestConstants.CrossProcessUrl + "/empty.html");
+                await page.EvaluateAsync("url => window.open(url)", Server.CrossProcessPrefix + "/empty.html");
             });
 
-            Assert.Contains(TestConstants.CrossProcessUrl, otherPage.Url);
-            Assert.Equal("Hello world", await otherPage.EvaluateAsync<string>("() => ['Hello', 'world'].join(' ')"));
+            StringAssert.Contains(Server.CrossProcessPrefix, otherPage.Url);
+            Assert.AreEqual("Hello world", await otherPage.EvaluateAsync<string>("() => ['Hello', 'world'].join(' ')"));
             Assert.NotNull(await otherPage.QuerySelectorAsync("body"));
 
 
             var allPages = context.Pages;
-            Assert.Contains(page, allPages);
-            Assert.Contains(otherPage, allPages);
+            CollectionAssert.Contains(allPages, page);
+            CollectionAssert.Contains(allPages, otherPage);
 
             var closeEventReceived = new TaskCompletionSource<bool>();
             otherPage.Close += (_, _) => closeEventReceived.TrySetResult(true);
 
             await otherPage.CloseAsync();
-            await closeEventReceived.Task.WithTimeout(TestConstants.DefaultTaskTimeout);
+            await closeEventReceived.Task;
 
             allPages = context.Pages;
-            Assert.Contains(page, allPages);
-            Assert.DoesNotContain(otherPage, allPages);
+            CollectionAssert.Contains(allPages, page);
+            CollectionAssert.DoesNotContain(allPages, otherPage);
         }
 
         [PlaywrightTest("browsercontext-page-event.spec.ts", "should report initialized pages")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReportInitializedPages()
         {
             await using var context = await Browser.NewContextAsync();
-            var pageTask = context.WaitForEventAsync(BrowserContextEvent.Page);
+            var pageTask = context.WaitForPageAsync();
             _ = context.NewPageAsync();
             var newPage = await pageTask;
-            Assert.Equal("about:blank", newPage.Url);
+            Assert.AreEqual("about:blank", newPage.Url);
 
-            var popupTask = context.WaitForEventAsync(BrowserContextEvent.Page);
+            var popupTask = context.WaitForPageAsync();
             var evaluateTask = newPage.EvaluateAsync("() => window.open('about:blank')");
             var popup = await popupTask;
-            Assert.Equal("about:blank", popup.Url);
+            Assert.AreEqual("about:blank", popup.Url);
             await evaluateTask;
         }
 
         [PlaywrightTest("browsercontext-page-event.spec.ts", "should not crash while redirecting of original request was missed")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldNotCrashWhileRedirectingOfOriginalRequestWasMissed()
         {
             await using var context = await Browser.NewContextAsync();
@@ -139,38 +154,38 @@ namespace Microsoft.Playwright.Tests
             });
 
             // Open a new page. Use window.open to connect to the page later.
-            var pageCreatedTask = context.WaitForEventAsync(BrowserContextEvent.Page);
+            var pageCreatedTask = context.WaitForPageAsync();
             await TaskUtils.WhenAll(
                 pageCreatedTask,
-                page.EvaluateAsync("url => window.open(url)", TestConstants.ServerUrl + "/one-style.html"),
+                page.EvaluateAsync("url => window.open(url)", Server.Prefix + "/one-style.html"),
                 Server.WaitForRequest("/one-style.css"));
 
             var newPage = pageCreatedTask.Result;
 
             await newPage.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-            Assert.Equal(TestConstants.ServerUrl + "/one-style.html", newPage.Url);
+            Assert.AreEqual(Server.Prefix + "/one-style.html", newPage.Url);
         }
 
         [PlaywrightTest("browsercontext-page-event.spec.ts", "should have an opener")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldHaveAnOpener()
         {
             await using var context = await Browser.NewContextAsync();
             var page = await context.NewPageAsync();
-            await page.GotoAsync(TestConstants.EmptyPage);
+            await page.GotoAsync(Server.EmptyPage);
 
             var (popupEvent, _) = await TaskUtils.WhenAll(
-              context.WaitForEventAsync(BrowserContextEvent.Page),
-              page.GotoAsync(TestConstants.ServerUrl + "/popup/window-open.html"));
+              context.WaitForPageAsync(),
+              page.GotoAsync(Server.Prefix + "/popup/window-open.html"));
 
             var popup = popupEvent;
-            Assert.Equal(TestConstants.ServerUrl + "/popup/popup.html", popup.Url);
-            Assert.Same(page, await popup.OpenerAsync());
+            Assert.AreEqual(Server.Prefix + "/popup/popup.html", popup.Url);
+            Assert.AreEqual(page, await popup.OpenerAsync());
             Assert.Null(await page.OpenerAsync());
         }
 
         [PlaywrightTest("browsercontext-page-event.spec.ts", "should fire page lifecycle events")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFirePageLoadStates()
         {
             await using var context = await Browser.NewContextAsync();
@@ -183,50 +198,50 @@ namespace Microsoft.Playwright.Tests
             };
 
             var page = await context.NewPageAsync();
-            await page.GotoAsync(TestConstants.EmptyPage);
+            await page.GotoAsync(Server.EmptyPage);
             await page.CloseAsync();
-            Assert.Equal(
+            Assert.AreEqual(
                 new List<string>()
                 {
                     "CREATED: about:blank",
-                    $"DESTROYED: {TestConstants.EmptyPage}"
+                    $"DESTROYED: {Server.EmptyPage}"
                 },
                 events);
         }
 
         [PlaywrightTest("browsercontext-page-event.spec.ts", "should work with Shift-clicking")]
-        [SkipBrowserAndPlatformFact(skipWebkit: true)]
+        [Test, SkipBrowserAndPlatform(skipWebkit: true)]
         public async Task ShouldWorkWithShiftClicking()
         {
             // WebKit: Shift+Click does not open a new window.
             await using var context = await Browser.NewContextAsync();
             var page = await context.NewPageAsync();
-            await page.GotoAsync(TestConstants.EmptyPage);
+            await page.GotoAsync(Server.EmptyPage);
             await page.SetContentAsync("<a href=\"/one-style.html\">yo</a>");
 
-            var popupEventTask = context.WaitForEventAsync(BrowserContextEvent.Page);
+            var popupEventTask = context.WaitForPageAsync();
             await TaskUtils.WhenAll(
               popupEventTask,
-              page.ClickAsync("a", new PageClickOptions { Modifiers = new[] { KeyboardModifier.Shift } }));
+              page.ClickAsync("a", new() { Modifiers = new[] { KeyboardModifier.Shift } }));
 
             Assert.Null(await popupEventTask.Result.OpenerAsync());
         }
 
         [PlaywrightTest("browsercontext-page-event.spec.ts", "should report when a new page is created and closed")]
-        [SkipBrowserAndPlatformFact(skipWebkit: true, skipFirefox: true)]
+        [Test, SkipBrowserAndPlatform(skipWebkit: true, skipFirefox: true)]
         public async Task ShouldWorkWithCtrlClicking()
         {
             // Firefox: reports an opener in this case.
             // WebKit: Ctrl+Click does not open a new tab.
             await using var context = await Browser.NewContextAsync();
             var page = await context.NewPageAsync();
-            await page.GotoAsync(TestConstants.EmptyPage);
+            await page.GotoAsync(Server.EmptyPage);
             await page.SetContentAsync("<a href=\"/one-style.html\">yo</a>");
 
-            var popupEventTask = context.WaitForEventAsync(BrowserContextEvent.Page);
+            var popupEventTask = context.WaitForPageAsync();
             await TaskUtils.WhenAll(
               popupEventTask,
-              page.ClickAsync("a", new PageClickOptions { Modifiers = new[] { TestConstants.IsMacOSX ? KeyboardModifier.Meta : KeyboardModifier.Control } }));
+              page.ClickAsync("a", new() { Modifiers = new[] { TestConstants.IsMacOSX ? KeyboardModifier.Meta : KeyboardModifier.Control } }));
 
             Assert.Null(await popupEventTask.Result.OpenerAsync());
         }

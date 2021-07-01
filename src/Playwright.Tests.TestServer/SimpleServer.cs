@@ -1,3 +1,28 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2020 Darío Kondratiuk
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -23,19 +48,38 @@ namespace Microsoft.Playwright.Tests.TestServer
         private readonly IDictionary<string, (string username, string password)> _auths;
         private readonly IDictionary<string, string> _csp;
         private readonly IWebHost _webHost;
-        private static int counter;
-        private readonly Dictionary<int, WebSocket> _clients = new Dictionary<int, WebSocket>();
+        private static int _counter;
+        private readonly Dictionary<int, WebSocket> _clients = new();
+
+        public int Port { get; }
+        public string Prefix { get; }
+        public string CrossProcessPrefix { get; }
+        public string EmptyPage { get; internal set; }
 
         internal IList<string> GzipRoutes { get; }
 
         public event EventHandler<RequestReceivedEventArgs> RequestReceived;
 
-        public static SimpleServer Create(int port, string contentRoot) => new SimpleServer(port, contentRoot, isHttps: false);
+        public static SimpleServer Create(int port, string contentRoot) => new(port, contentRoot, isHttps: false);
 
-        public static SimpleServer CreateHttps(int port, string contentRoot) => new SimpleServer(port, contentRoot, isHttps: true);
+        public static SimpleServer CreateHttps(int port, string contentRoot) => new(port, contentRoot, isHttps: true);
 
         public SimpleServer(int port, string contentRoot, bool isHttps)
         {
+            Port = port;
+            if (isHttps)
+            {
+                Prefix = $"https://localhost:{port}";
+                CrossProcessPrefix = $"https://127.0.0.1:{port}";
+            }
+            else
+            {
+                Prefix = $"http://localhost:{port}";
+                CrossProcessPrefix = $"http://127.0.0.1:{port}";
+            }
+
+            EmptyPage = $"{Prefix}/empty.html";
+
             _subscribers = new ConcurrentDictionary<string, Action<HttpContext>>();
             _requestWaits = new ConcurrentDictionary<string, Action<HttpContext>>();
             _routes = new ConcurrentDictionary<string, RequestDelegate>();
@@ -54,14 +98,14 @@ namespace Microsoft.Playwright.Tests.TestServer
 #endif
                     .Use(async (context, next) =>
                     {
-                        RequestReceived?.Invoke(this, new RequestReceivedEventArgs { Request = context.Request });
+                        RequestReceived?.Invoke(this, new() { Request = context.Request });
 
                         if (context.Request.Path == "/ws")
                         {
                             if (context.WebSockets.IsWebSocketRequest)
                             {
                                 var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                                await webSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes("incoming")), WebSocketMessageType.Text, true, CancellationToken.None);
+                                await webSocket.SendAsync(new(Encoding.UTF8.GetBytes("incoming")), WebSocketMessageType.Text, true, CancellationToken.None);
                                 await ReceiveLoopAsync(webSocket, context.Request.Headers["User-Agent"].ToString().Contains("Firefox"), CancellationToken.None);
                             }
                             else if (!context.Response.HasStarted)
@@ -152,11 +196,11 @@ namespace Microsoft.Playwright.Tests.TestServer
 
         public Task StartAsync() => _webHost.StartAsync();
 
-        public async Task StopAsync()
+        public Task StopAsync()
         {
             Reset();
 
-            await _webHost.StopAsync();
+            return _webHost.StopAsync();
         }
 
         public void Reset()
@@ -228,7 +272,7 @@ namespace Microsoft.Playwright.Tests.TestServer
             {
                 while (true)
                 {
-                    var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), token);
+                    var result = await webSocket.ReceiveAsync(new(buffer), token);
 
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
@@ -262,25 +306,25 @@ namespace Microsoft.Playwright.Tests.TestServer
                 if (count >= MaxMessageSize)
                 {
                     string closeMessage = string.Format("Maximum message size: {0} bytes.", MaxMessageSize);
-                    await webSocket.CloseAsync(WebSocketCloseStatus.MessageTooBig, closeMessage, CancellationToken.None);
-                    return new ArraySegment<byte>();
+                    await webSocket.CloseAsync(WebSocketCloseStatus.MessageTooBig, closeMessage, token);
+                    return new();
                 }
 
-                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer, count, MaxMessageSize - count), CancellationToken.None);
+                result = await webSocket.ReceiveAsync(new(buffer, count, MaxMessageSize - count), token);
                 count += result.Count;
 
             }
-            return new ArraySegment<byte>(buffer, 0, count);
+            return new(buffer, 0, count);
         }
 
 
         private static int NextConnectionId()
         {
-            int id = Interlocked.Increment(ref counter);
+            int id = Interlocked.Increment(ref _counter);
 
             if (id == int.MaxValue)
             {
-                throw new Exception("connection id limit reached: " + id);
+                throw new("connection id limit reached: " + id);
             }
 
             return id;

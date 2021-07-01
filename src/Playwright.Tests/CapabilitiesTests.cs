@@ -1,33 +1,49 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
     ///<playwright-file>capabilities.spec.ts</playwright-file>
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class CapabilitiesTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class CapabilitiesTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public CapabilitiesTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("capabilities.spec.ts", "Web Assembly should work")]
-        [SkipBrowserAndPlatformFact(skipWebkit: true, skipWindows: true)]
+        [Test, SkipBrowserAndPlatform(skipWebkit: true, skipWindows: true)]
         public async Task WebAssemblyShouldWork()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/wasm/table2.html");
-            Assert.Equal("42, 83", await Page.EvaluateAsync<string>("() => loadTable()"));
+            await Page.GotoAsync(Server.Prefix + "/wasm/table2.html");
+            Assert.AreEqual("42, 83", await Page.EvaluateAsync<string>("() => loadTable()"));
         }
 
 #if NETCOREAPP
         [PlaywrightTest("capabilities.spec.ts", "WebSocket should work")]
-        [SkipBrowserAndPlatformFact(skipWebkit: true, skipWindows: true)]
+        [Test, SkipBrowserAndPlatform(skipWebkit: true, skipWindows: true)]
         public async Task WebSocketShouldWork()
         {
             string value = await Page.EvaluateAsync<string>(
@@ -39,13 +55,13 @@ namespace Microsoft.Playwright.Tests
                     ws.addEventListener('error', error => cb('Error'));
                     return result;
                 }}",
-                TestConstants.Port);
-            Assert.Equal("incoming", value);
+                Server.Port);
+            Assert.AreEqual("incoming", value);
         }
 #endif
 
         [PlaywrightTest("capabilities.spec.ts", "should respect CSP")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldRespectCSP()
         {
             Server.SetRoute("/empty.html", context =>
@@ -62,15 +78,15 @@ namespace Microsoft.Playwright.Tests
                 return context.Response.WriteAsync(message);
             });
 
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            Assert.Equal("SUCCESS", await Page.EvaluateAsync<string>("() => window.testStatus"));
+            await Page.GotoAsync(Server.EmptyPage);
+            Assert.AreEqual("SUCCESS", await Page.EvaluateAsync<string>("() => window.testStatus"));
         }
 
         [PlaywrightTest("capabilities.spec.ts", "should play video")]
-        [SkipBrowserAndPlatformFact(skipWebkit: true)]
+        [Test, SkipBrowserAndPlatform(skipWebkit: true)]
         public async Task ShouldPlayVideo()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + (TestConstants.IsWebKit ? "/video_mp4.html" : "/video.html"));
+            await Page.GotoAsync(Server.Prefix + (TestConstants.IsWebKit ? "/video_mp4.html" : "/video.html"));
             await Page.EvalOnSelectorAsync("video", "v => v.play()");
             await Page.EvalOnSelectorAsync("video", "v => v.pause()");
         }

@@ -24,6 +24,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -33,6 +34,8 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+
+#nullable enable
 
 namespace Microsoft.Playwright
 {
@@ -86,7 +89,7 @@ namespace Microsoft.Playwright
         /// its response has started loading in the popup.
         /// </para>
         /// <code>
-        /// var popup = await context.RunAndWaitForEventAsync(BrowserBrowserContextEvent.Page, async =&gt;<br/>
+        /// var popup = await context.RunAndWaitForPageAsync(async =&gt;<br/>
         /// {<br/>
         ///     await page.ClickAsync("a");<br/>
         /// });<br/>
@@ -100,6 +103,54 @@ namespace Microsoft.Playwright
         /// </para>
         /// </remarks>
         event EventHandler<IPage> Page;
+
+        /// <summary>
+        /// <para>
+        /// Emitted when a request is issued from any pages created through this context. The
+        /// <see cref="request"/> object is read-only. To only listen for requests from a particular
+        /// page, use <see cref="IPage.Request"/>.
+        /// </para>
+        /// <para>
+        /// In order to intercept and mutate requests, see <see cref="IBrowserContext.RouteAsync"/>
+        /// or <see cref="IPage.RouteAsync"/>.
+        /// </para>
+        /// </summary>
+        event EventHandler<IRequest> Request;
+
+        /// <summary>
+        /// <para>
+        /// Emitted when a request fails, for example by timing out. To only listen for failed
+        /// requests from a particular page, use <see cref="IPage.RequestFailed"/>.
+        /// </para>
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// HTTP Error responses, such as 404 or 503, are still successful responses from HTTP
+        /// standpoint, so request will complete with <see cref="IBrowserContext.RequestFinished"/>
+        /// event and not with <see cref="IBrowserContext.RequestFailed"/>.
+        /// </para>
+        /// </remarks>
+        event EventHandler<IRequest> RequestFailed;
+
+        /// <summary>
+        /// <para>
+        /// Emitted when a request finishes successfully after downloading the response body.
+        /// For a successful response, the sequence of events is <c>request</c>, <c>response</c>
+        /// and <c>requestfinished</c>. To listen for successful requests from a particular
+        /// page, use <see cref="IPage.RequestFinished"/>.
+        /// </para>
+        /// </summary>
+        event EventHandler<IRequest> RequestFinished;
+
+        /// <summary>
+        /// <para>
+        /// Emitted when <see cref="response"/> status and headers are received for a request.
+        /// For a successful response, the sequence of events is <c>request</c>, <c>response</c>
+        /// and <c>requestfinished</c>. To listen for response events from a particular page,
+        /// use <see cref="IPage.Response"/>.
+        /// </para>
+        /// </summary>
+        event EventHandler<IResponse> Response;
 
         /// <summary>
         /// <para>
@@ -136,7 +187,7 @@ namespace Microsoft.Playwright
         /// </remarks>
         /// <param name="script">Script to be evaluated in all pages in the browser context.</param>
         /// <param name="scriptPath">Instead of specifying <paramref name="script"/>, gives the file name to load from.</param>
-        Task AddInitScriptAsync(string script = null, string scriptPath = null);
+        Task AddInitScriptAsync(string? script = default, string? scriptPath = default);
 
         /// <summary>
         /// <para>
@@ -144,7 +195,7 @@ namespace Microsoft.Playwright
         /// context null gets returned.
         /// </para>
         /// </summary>
-        IBrowser Browser { get; }
+        IBrowser? Browser { get; }
 
         /// <summary><para>Clears context cookies.</para></summary>
         Task ClearCookiesAsync();
@@ -178,7 +229,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         /// <param name="urls">Optional list of URLs.</param>
-        Task<IReadOnlyList<BrowserContextCookiesResult>> CookiesAsync(IEnumerable<string> urls = default);
+        Task<IReadOnlyList<BrowserContextCookiesResult>> CookiesAsync(IEnumerable<string>? urls = default);
 
         /// <summary>
         /// <para>
@@ -244,7 +295,7 @@ namespace Microsoft.Playwright
         /// <param name="name">Name of the function on the window object.</param>
         /// <param name="callback">Callback function that will be called in the Playwright's context.</param>
         /// <param name="options">Call options</param>
-        Task ExposeBindingAsync(string name, Action callback, BrowserContextExposeBindingOptions options = default);
+        Task ExposeBindingAsync(string name, Action callback, BrowserContextExposeBindingOptions? options = default);
 
         /// <summary>
         /// <para>
@@ -255,7 +306,7 @@ namespace Microsoft.Playwright
         /// </para>
         /// <para>If the <paramref name="callback"/> returns a <see cref="Task"/>, it will be awaited.</para>
         /// <para>See <see cref="IPage.ExposeFunctionAsync"/> for page-only version.</para>
-        /// <para>An example of adding an <c>md5</c> function to all pages in the context:</para>
+        /// <para>An example of adding a <c>sha256</c> function to all pages in the context:</para>
         /// <code>
         /// using Microsoft.Playwright;<br/>
         /// using System;<br/>
@@ -264,24 +315,22 @@ namespace Microsoft.Playwright
         /// <br/>
         /// class BrowserContextExamples<br/>
         /// {<br/>
-        ///     public static async Task AddMd5FunctionToAllPagesInContext()<br/>
+        ///     public static async Task Main()<br/>
         ///     {<br/>
         ///         using var playwright = await Playwright.CreateAsync();<br/>
         ///         var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });<br/>
         ///         var context = await browser.NewContextAsync();<br/>
         /// <br/>
-        ///         // NOTE: md5 is inherently insecure, and we strongly discourage using<br/>
-        ///         // this in production in any shape or form<br/>
-        ///         await context.ExposeFunctionAsync("sha1", (string input) =&gt;<br/>
+        ///         await context.ExposeFunctionAsync("sha256", (string input) =&gt;<br/>
         ///         {<br/>
         ///             return Convert.ToBase64String(<br/>
-        ///                 MD5.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));<br/>
+        ///                 SHA256.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));<br/>
         ///         });<br/>
         /// <br/>
         ///         var page = await context.NewPageAsync();<br/>
         ///         await page.SetContentAsync("&lt;script&gt;\n" +<br/>
         ///         "  async function onClick() {\n" +<br/>
-        ///         "    document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');\n" +<br/>
+        ///         "    document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');\n" +<br/>
         ///         "  }\n" +<br/>
         ///         "&lt;/script&gt;\n" +<br/>
         ///         "&lt;button onclick=\"onClick()\"&gt;Click me&lt;/button&gt;\n" +<br/>
@@ -326,7 +375,7 @@ namespace Microsoft.Playwright
         /// </list>
         /// </param>
         /// <param name="options">Call options</param>
-        Task GrantPermissionsAsync(IEnumerable<string> permissions, BrowserContextGrantPermissionsOptions options = default);
+        Task GrantPermissionsAsync(IEnumerable<string> permissions, BrowserContextGrantPermissionsOptions? options = default);
 
         /// <summary><para>Creates a new page in the browser context.</para></summary>
         Task<IPage> NewPageAsync();
@@ -492,7 +541,7 @@ namespace Microsoft.Playwright
         /// <item><description><see cref="IPage.GotoAsync"/></description></item>
         /// <item><description><see cref="IPage.ReloadAsync"/></description></item>
         /// <item><description><see cref="IPage.SetContentAsync"/></description></item>
-        /// <item><description><see cref="IPage.WaitForNavigationAsync"/></description></item>
+        /// <item><description><see cref="IPage.RunAndWaitForNavigationAsync"/></description></item>
         /// </list>
         /// </summary>
         /// <remarks>
@@ -562,7 +611,7 @@ namespace Microsoft.Playwright
         /// </remarks>
         /// <param name="geolocation">
         /// </param>
-        Task SetGeolocationAsync(Geolocation geolocation);
+        Task SetGeolocationAsync(Geolocation? geolocation);
 
         /// <param name="offline">Whether to emulate network being offline for the browser context.</param>
         Task SetOfflineAsync(bool offline);
@@ -574,7 +623,9 @@ namespace Microsoft.Playwright
         /// </para>
         /// </summary>
         /// <param name="options">Call options</param>
-        Task<string> StorageStateAsync(BrowserContextStorageStateOptions options = default);
+        Task<string> StorageStateAsync(BrowserContextStorageStateOptions? options = default);
+
+        public ITracing Tracing { get; }
 
         /// <summary>
         /// <para>
@@ -587,7 +638,7 @@ namespace Microsoft.Playwright
         /// a routing with <see cref="IBrowserContext.RouteAsync"/>.
         /// </param>
         /// <param name="handler">Optional handler function used to register a routing with <see cref="IBrowserContext.RouteAsync"/>.</param>
-        Task UnrouteAsync(string url, Action<IRoute> handler = default);
+        Task UnrouteAsync(string url, Action<IRoute>? handler = default);
 
         /// <summary>
         /// <para>
@@ -600,7 +651,7 @@ namespace Microsoft.Playwright
         /// a routing with <see cref="IBrowserContext.RouteAsync"/>.
         /// </param>
         /// <param name="handler">Optional handler function used to register a routing with <see cref="IBrowserContext.RouteAsync"/>.</param>
-        Task UnrouteAsync(Regex url, Action<IRoute> handler = default);
+        Task UnrouteAsync(Regex url, Action<IRoute>? handler = default);
 
         /// <summary>
         /// <para>
@@ -613,6 +664,31 @@ namespace Microsoft.Playwright
         /// a routing with <see cref="IBrowserContext.RouteAsync"/>.
         /// </param>
         /// <param name="handler">Optional handler function used to register a routing with <see cref="IBrowserContext.RouteAsync"/>.</param>
-        Task UnrouteAsync(Func<string, bool> url, Action<IRoute> handler = default);
+        Task UnrouteAsync(Func<string, bool> url, Action<IRoute>? handler = default);
+
+        /// <summary>
+        /// <para>
+        /// Performs action and waits for a new <see cref="IPage"/> to be created in the context.
+        /// If predicate is provided, it passes <see cref="IPage"/> value into the <c>predicate</c>
+        /// function and waits for <c>predicate(event)</c> to return a truthy value. Will throw
+        /// an error if the context closes before new <see cref="IPage"/> is created.
+        /// </para>
+        /// </summary>
+        /// <param name="options">Call options</param>
+        Task<IPage> WaitForPageAsync(BrowserContextWaitForPageOptions? options = default);
+
+        /// <summary>
+        /// <para>
+        /// Performs action and waits for a new <see cref="IPage"/> to be created in the context.
+        /// If predicate is provided, it passes <see cref="IPage"/> value into the <c>predicate</c>
+        /// function and waits for <c>predicate(event)</c> to return a truthy value. Will throw
+        /// an error if the context closes before new <see cref="IPage"/> is created.
+        /// </para>
+        /// </summary>
+        /// <param name="action">Action that triggers the event.</param>
+        /// <param name="options">Call options</param>
+        Task<IPage> RunAndWaitForPageAsync(Func<Task> action, BrowserContextRunAndWaitForPageOptions? options = default);
     }
 }
+
+#nullable disable

@@ -1,68 +1,86 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2020 Darío Kondratiuk
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageEventRequestTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageEventRequestTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageEventRequestTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-event-request.spec.ts", "should fire for navigation requests")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFireForNavigationRequests()
         {
             var requests = new List<IRequest>();
             Page.Request += (_, e) => requests.Add(e);
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            Assert.Single(requests);
+            await Page.GotoAsync(Server.EmptyPage);
+            Assert.That(requests, Has.Count.EqualTo(1));
         }
 
         [PlaywrightTest("page-event-request.spec.ts", "should fire for iframes")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFireForIframes()
         {
             var requests = new List<IRequest>();
             Page.Request += (_, e) => requests.Add(e);
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            await FrameUtils.AttachFrameAsync(Page, "frame1", TestConstants.EmptyPage);
-            Assert.Equal(2, requests.Count);
+            await Page.GotoAsync(Server.EmptyPage);
+            await FrameUtils.AttachFrameAsync(Page, "frame1", Server.EmptyPage);
+            Assert.AreEqual(2, requests.Count);
         }
 
         [PlaywrightTest("page-event-request.spec.ts", "should fire for fetches")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFireForFetches()
         {
             var requests = new List<IRequest>();
             Page.Request += (_, e) => requests.Add(e);
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
             await Page.EvaluateAsync("fetch('/empty.html')");
-            Assert.Equal(2, requests.Count);
+            Assert.AreEqual(2, requests.Count);
         }
 
         [PlaywrightTest("page-event-request.spec.ts", "should report requests and responses handled by service worker")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReportRequestsAndResponsesHandledByServiceWorker()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/serviceworkers/fetchdummy/sw.html");
+            await Page.GotoAsync(Server.Prefix + "/serviceworkers/fetchdummy/sw.html");
             await Page.EvaluateAsync("() => window.activationPromise");
 
             var (request, swResponse) = await TaskUtils.WhenAll(
-                Page.WaitForEventAsync(PageEvent.Request),
+                Page.WaitForRequestAsync("**/*"),
                 Page.EvaluateAsync<string>("() => fetchDummy('foo')"));
 
-            Assert.Equal("responseFromServiceWorker:foo", swResponse);
-            Assert.Equal(TestConstants.ServerUrl + "/serviceworkers/fetchdummy/foo", request.Url);
+            Assert.AreEqual("responseFromServiceWorker:foo", swResponse);
+            Assert.AreEqual(Server.Prefix + "/serviceworkers/fetchdummy/foo", request.Url);
             var response = await request.ResponseAsync();
-            Assert.Equal(TestConstants.ServerUrl + "/serviceworkers/fetchdummy/foo", response.Url);
-            Assert.Equal("responseFromServiceWorker:foo", await response.TextAsync());
+            Assert.AreEqual(Server.Prefix + "/serviceworkers/fetchdummy/foo", response.Url);
+            Assert.AreEqual("responseFromServiceWorker:foo", await response.TextAsync());
         }
     }
 }

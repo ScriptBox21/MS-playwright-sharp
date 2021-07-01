@@ -1,17 +1,39 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Esprima;
-using Esprima.Ast;
 
 namespace Microsoft.Playwright.Helpers
 {
     /// <summary>
     /// String extensions.
     /// </summary>
-    public static class StringExtensions
+    internal static class StringExtensions
     {
         private static readonly char[] _escapeGlobChars = new[] { '/', '$', '^', '+', '.', '(', ')', '=', '!', '|' };
 
@@ -648,47 +670,11 @@ namespace Microsoft.Playwright.Helpers
         }
 
         /// <summary>
-        /// Determine if the script is a javascript function and not an expression.
-        /// </summary>
-        /// <param name="script">Script to evaluate.</param>
-        /// <param name="retry">Whether it should retry by wrapping the code in parenthesis.</param>
-        /// <param name="checkExpression">Checks whether the function could be a function expression.</param>
-        /// <returns>Whether the script is a function or not.</returns>
-        public static bool IsJavascriptFunction(this string script, bool retry = true, bool checkExpression = false)
-        {
-            try
-            {
-                var parser = new JavaScriptParser(script);
-                var program = parser.ParseScript();
-
-                if (program.Body.Count > 0)
-                {
-                    return
-                        (program.Body[0] is ExpressionStatement expression && (
-                            expression.Expression.Type == Nodes.ArrowFunctionExpression ||
-                           (checkExpression && expression.Expression.Type == Nodes.FunctionExpression))) ||
-                        program.Body[0] is FunctionDeclaration;
-                }
-
-                return false;
-            }
-            catch (ParserException)
-            {
-                if (retry)
-                {
-                    return IsJavascriptFunction($"({script})", false, true);
-                }
-
-                return true;
-            }
-        }
-
-        /// <summary>
         /// Converts an url glob expression to a regex.
         /// </summary>
         /// <param name="glob">Input url.</param>
         /// <returns>A Regex with the glob expression.</returns>
-        public static Regex GlobToRegex(this string glob)
+        public static string GlobToRegex(this string glob)
         {
             if (string.IsNullOrEmpty(glob))
             {
@@ -764,7 +750,7 @@ namespace Microsoft.Playwright.Helpers
             }
 
             tokens.Add("$");
-            return new Regex(string.Concat(tokens.ToArray()));
+            return string.Concat(tokens.ToArray());
         }
 
         /// <summary>
@@ -786,7 +772,7 @@ namespace Microsoft.Playwright.Helpers
             return _mappings.TryGetValue(extension, out string contentType) ? contentType : defaultContentType;
         }
 
-        internal static bool UrlMatches(this string url, string glob) => GlobToRegex(glob).Match(url).Success;
+        internal static bool UrlMatches(this string url, string glob) => new Regex(GlobToRegex(glob)).Match(url).Success;
 
         internal static string MimeType(this string file)
             => _mappings.TryGetValue(new FileInfo(file).Extension, out string mime) ? mime : "application/octet-stream";
@@ -795,7 +781,7 @@ namespace Microsoft.Playwright.Helpers
         {
             var fileInfo = new FileInfo(file);
 
-            return new FilePayload
+            return new()
             {
                 Name = fileInfo.Name,
                 Buffer = File.ReadAllBytes(file),

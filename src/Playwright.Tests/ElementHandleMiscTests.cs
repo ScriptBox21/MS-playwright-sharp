@@ -1,63 +1,80 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class ElementHandleMiscTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class ElementHandleMiscTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public ElementHandleMiscTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("elementhandle-misc.spec.ts", "should hover")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldHover()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/input/scrollable.html");
+            await Page.GotoAsync(Server.Prefix + "/input/scrollable.html");
             var button = await Page.QuerySelectorAsync("#button-6");
             await button.HoverAsync();
-            Assert.Equal("button-6", await Page.EvaluateAsync<string>("() => document.querySelector('button:hover').id"));
+            Assert.AreEqual("button-6", await Page.EvaluateAsync<string>("() => document.querySelector('button:hover').id"));
         }
 
         [PlaywrightTest("elementhandle-misc.spec.ts", "should hover when Node is removed")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldHoverWhenNodeIsRemoved()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/input/scrollable.html");
+            await Page.GotoAsync(Server.Prefix + "/input/scrollable.html");
             await Page.EvaluateAsync("() => delete window['Node']");
             var button = await Page.QuerySelectorAsync("#button-6");
             await button.HoverAsync();
-            Assert.Equal("button-6", await Page.EvaluateAsync<string>("() => document.querySelector('button:hover').id"));
+            Assert.AreEqual("button-6", await Page.EvaluateAsync<string>("() => document.querySelector('button:hover').id"));
         }
 
         [PlaywrightTest("elementhandle-misc.spec.ts", "should fill input")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFillInput()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/input/textarea.html");
+            await Page.GotoAsync(Server.Prefix + "/input/textarea.html");
             var handle = await Page.QuerySelectorAsync("input");
             await handle.FillAsync("some value");
-            Assert.Equal("some value", await Page.EvaluateAsync<string>("() => result"));
+            Assert.AreEqual("some value", await Page.EvaluateAsync<string>("() => result"));
         }
 
         [PlaywrightTest("elementhandle-misc.spec.ts", "should fill input when Node is removed")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFillInputWhenNodeIsRemoved()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/input/textarea.html");
+            await Page.GotoAsync(Server.Prefix + "/input/textarea.html");
             await Page.EvaluateAsync("() => delete window['Node']");
             var handle = await Page.QuerySelectorAsync("input");
             await handle.FillAsync("some value");
-            Assert.Equal("some value", await Page.EvaluateAsync<string>("() => result"));
+            Assert.AreEqual("some value", await Page.EvaluateAsync<string>("() => result"));
         }
 
         [PlaywrightTest("elementhandle-misc.spec.ts", "should check the box")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldCheckTheBox()
         {
             await Page.SetContentAsync("<input id='checkbox' type='checkbox'></input>");
@@ -67,7 +84,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("elementhandle-misc.spec.ts", "should uncheck the box")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldUncheckTheBox()
         {
             await Page.SetContentAsync("<input id='checkbox' type='checkbox'></input>");
@@ -77,10 +94,10 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("elementhandle-misc.spec.ts", "should focus a button")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldFocusAButton()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/input/button.html");
+            await Page.GotoAsync(Server.Prefix + "/input/button.html");
             var button = await Page.QuerySelectorAsync("button");
 
             Assert.False(await button.EvaluateAsync<bool?>("button => document.activeElement === button"));
@@ -89,15 +106,15 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("elementhandle-misc.spec.ts", "should select single option")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldSelectSingleOption()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/input/select.html");
+            await Page.GotoAsync(Server.Prefix + "/input/select.html");
             var select = await Page.QuerySelectorAsync("select");
             await select.SelectOptionAsync("blue");
 
-            Assert.Equal(new[] { "blue" }, await Page.EvaluateAsync<string[]>("() => result.onInput"));
-            Assert.Equal(new[] { "blue" }, await Page.EvaluateAsync<string[]>("() => result.onChange"));
+            Assert.AreEqual(new[] { "blue" }, await Page.EvaluateAsync<string[]>("() => result.onInput"));
+            Assert.AreEqual(new[] { "blue" }, await Page.EvaluateAsync<string[]>("() => result.onChange"));
         }
     }
 }

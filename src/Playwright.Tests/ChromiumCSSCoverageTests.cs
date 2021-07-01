@@ -1,34 +1,46 @@
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Newtonsoft.Json;
-using Xunit;
-using Xunit.Abstractions;
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class ChromiumCSSCoverageTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class ChromiumCSSCoverageTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public ChromiumCSSCoverageTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("chromium-css-coverage.spec.ts", "CSS Coverage", "should work")]
-        [Fact(Skip = "We won't support coverage")]
+        [Test, Ignore("We won't support coverage")]
         public void ShouldWork()
         {
             /*
             await Page.Coverage.StartCSSCoverageAsync();
-            await Page.GotoAsync(TestConstants.ServerUrl + "/csscoverage/simple.html");
+            await Page.GotoAsync(Server.Prefix + "/csscoverage/simple.html");
             var coverage = await Page.Coverage.StopCSSCoverageAsync();
-            Assert.Single(coverage);
-            Assert.Contains("/csscoverage/simple.html", coverage[0].Url);
-            Assert.Equal(new[]
+            Assert.That(coverage, Has.Count.EqualTo(1));
+            StringAssert.Contains("/csscoverage/simple.html", coverage[0].Url);
+            Assert.AreEqual(new[]
             {
                 new CSSCoverageEntryRange
                 {
@@ -37,65 +49,65 @@ namespace Microsoft.Playwright.Tests
                 }
             }, coverage[0].Ranges);
             var range = coverage[0].Ranges[0];
-            Assert.Equal("div { color: green; }", coverage[0].Text.Substring(range.Start, range.End - range.Start));
+            Assert.AreEqual("div { color: green; }", coverage[0].Text.Substring(range.Start, range.End - range.Start));
             */
         }
 
         [PlaywrightTest("chromium-css-coverage.spec.ts", "CSS Coverage", "should report sourceURLs")]
-        [Fact(Skip = "We won't support coverage")]
+        [Test, Ignore("We won't support coverage")]
         public void ShouldReportSourceUrls()
         {
             /*
             await Page.Coverage.StartCSSCoverageAsync();
-            await Page.GotoAsync(TestConstants.ServerUrl + "/csscoverage/sourceurl.html");
+            await Page.GotoAsync(Server.Prefix + "/csscoverage/sourceurl.html");
             var coverage = await Page.Coverage.StopCSSCoverageAsync();
-            Assert.Single(coverage);
-            Assert.Equal("nicename.css", coverage[0].Url);
+            Assert.That(coverage, Has.Count.EqualTo(1));
+            Assert.AreEqual("nicename.css", coverage[0].Url);
             */
         }
 
         [PlaywrightTest("chromium-css-coverage.spec.ts", "CSS Coverage", "should report multiple stylesheets")]
-        [Fact(Skip = "We won't support coverage")]
+        [Test, Ignore("We won't support coverage")]
         public void ShouldReportMultipleStylesheets()
         {
             /*
             await Page.Coverage.StartCSSCoverageAsync();
-            await Page.GotoAsync(TestConstants.ServerUrl + "/csscoverage/multiple.html");
+            await Page.GotoAsync(Server.Prefix + "/csscoverage/multiple.html");
             var coverage = await Page.Coverage.StopCSSCoverageAsync();
-            Assert.Equal(2, coverage.Length);
+            Assert.AreEqual(2, coverage.Length);
             var orderedList = coverage.OrderBy(c => c.Url).ToArray();
-            Assert.Contains("/csscoverage/stylesheet1.css", orderedList[0].Url);
-            Assert.Contains("/csscoverage/stylesheet2.css", orderedList[1].Url);
+            StringAssert.Contains("/csscoverage/stylesheet1.css", orderedList[0].Url);
+            StringAssert.Contains("/csscoverage/stylesheet2.css", orderedList[1].Url);
             */
         }
 
         [PlaywrightTest("chromium-css-coverage.spec.ts", "CSS Coverage", "should report stylesheets that have no coverage")]
-        [Fact(Skip = "We won't support coverage")]
+        [Test, Ignore("We won't support coverage")]
         public void ShouldReportStylesheetsThatHaveNoCoverage()
         {
             /*
             await Page.Coverage.StartCSSCoverageAsync();
-            await Page.GotoAsync(TestConstants.ServerUrl + "/csscoverage/unused.html");
+            await Page.GotoAsync(Server.Prefix + "/csscoverage/unused.html");
             var coverage = await Page.Coverage.StopCSSCoverageAsync();
-            Assert.Single(coverage);
+            Assert.That(coverage, Has.Count.EqualTo(1));
             var entry = coverage[0];
-            Assert.Contains("unused.css", entry.Url);
-            Assert.Empty(entry.Ranges);
+            StringAssert.Contains("unused.css", entry.Url);
+            Assert.IsEmpty(entry.Ranges);
             */
         }
 
         [PlaywrightTest("chromium-css-coverage.spec.ts", "CSS Coverage", "should work with media queries")]
-        [Fact(Skip = "We won't support coverage")]
+        [Test, Ignore("We won't support coverage")]
         public void ShouldWorkWithMediaQueries()
         {
             /*
             await Page.Coverage.StartCSSCoverageAsync();
-            await Page.GotoAsync(TestConstants.ServerUrl + "/csscoverage/media.html");
+            await Page.GotoAsync(Server.Prefix + "/csscoverage/media.html");
             var coverage = await Page.Coverage.StopCSSCoverageAsync();
-            Assert.Single(coverage);
+            Assert.That(coverage, Has.Count.EqualTo(1));
             var entry = coverage[0];
-            Assert.Contains("/csscoverage/media.html", entry.Url);
-            Assert.Equal(new[]
+            StringAssert.Contains("/csscoverage/media.html", entry.Url);
+            Assert.AreEqual(new[]
             {
                 new CSSCoverageEntryRange
                 {
@@ -107,7 +119,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("chromium-css-coverage.spec.ts", "CSS Coverage", "should work with complicated usecases")]
-        [Fact(Skip = "We won't support coverage")]
+        [Test, Ignore("We won't support coverage")]
         public void ShouldWorkWithComplicatedUseCases()
         {
             /*
@@ -128,16 +140,16 @@ namespace Microsoft.Playwright.Tests
               }
             ]";
             await Page.Coverage.StartCSSCoverageAsync();
-            await Page.GotoAsync(TestConstants.ServerUrl + "/csscoverage/involved.html");
+            await Page.GotoAsync(Server.Prefix + "/csscoverage/involved.html");
             var coverage = await Page.Coverage.StopCSSCoverageAsync();
-            Assert.Equal(
+            Assert.AreEqual(
                 TestUtils.CompressText(involved),
                 Regex.Replace(TestUtils.CompressText(JsonConvert.SerializeObject(coverage)), @":\d{4}\/", ":<PORT>/"));
             */
         }
 
         [PlaywrightTest("chromium-css-coverage.spec.ts", "CSS Coverage", "should ignore injected stylesheets")]
-        [Fact(Skip = "We won't support coverage")]
+        [Test, Ignore("We won't support coverage")]
         public void ShouldIgnoreInjectedStylesheets()
         {
             /*
@@ -145,40 +157,40 @@ namespace Microsoft.Playwright.Tests
             await Page.AddStyleTagAsync(content: "body { margin: 10px;}");
             // trigger style recalc
             string margin = await Page.EvaluateAsync<string>("window.getComputedStyle(document.body).margin");
-            Assert.Equal("10px", margin);
+            Assert.AreEqual("10px", margin);
             var coverage = await Page.Coverage.StopCSSCoverageAsync();
-            Assert.Empty(coverage);
+            Assert.IsEmpty(coverage);
             */
         }
 
         [PlaywrightTest("chromium-css-coverage.spec.ts", "CSS Coverage", "should report stylesheets across navigations")]
-        [Fact(Skip = "We won't support coverage")]
+        [Test, Ignore("We won't support coverage")]
         public void ShouldReportStylesheetsAcrossNavigations()
         {
             /*
             await Page.Coverage.StartCSSCoverageAsync(false);
-            await Page.GotoAsync(TestConstants.ServerUrl + "/csscoverage/multiple.html");
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.Prefix + "/csscoverage/multiple.html");
+            await Page.GotoAsync(Server.EmptyPage);
             var coverage = await Page.Coverage.StopCSSCoverageAsync();
-            Assert.Equal(2, coverage.Length);
+            Assert.AreEqual(2, coverage.Length);
             */
         }
 
         [PlaywrightTest("chromium-css-coverage.spec.ts", "CSS Coverage", "should NOT report stylesheets across navigations")]
-        [Fact(Skip = "We won't support coverage")]
+        [Test, Ignore("We won't support coverage")]
         public void ShouldNotReportScriptsAcrossNavigations()
         {
             /*
             await Page.Coverage.StartCSSCoverageAsync();
-            await Page.GotoAsync(TestConstants.ServerUrl + "/csscoverage/multiple.html");
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.Prefix + "/csscoverage/multiple.html");
+            await Page.GotoAsync(Server.EmptyPage);
             var coverage = await Page.Coverage.StopCSSCoverageAsync();
-            Assert.Empty(coverage);
+            Assert.IsEmpty(coverage);
             */
         }
 
         [PlaywrightTest("chromium-css-coverage.spec.ts", "CSS Coverage", "should work with a recently loaded stylesheet")]
-        [Fact(Skip = "We won't support coverage")]
+        [Test, Ignore("We won't support coverage")]
         public void ShouldWorkWithArRecentlyLoadedStylesheet()
         {
             /*
@@ -192,9 +204,9 @@ namespace Microsoft.Playwright.Tests
                 document.head.appendChild(link);
                 await new Promise(x => link.onload = x);
                 await new Promise(f => requestAnimationFrame(f));
-            }", TestConstants.ServerUrl + "/csscoverage/stylesheet1.css");
+            }", Server.Prefix + "/csscoverage/stylesheet1.css");
             var coverage = await Page.Coverage.StopCSSCoverageAsync();
-            Assert.Single(coverage);
+            Assert.That(coverage, Has.Count.EqualTo(1));
             */
         }
     }

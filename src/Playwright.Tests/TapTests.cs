@@ -21,34 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
     /// <playwright-file>tap.spec.ts</playwright-file>
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public sealed class TapTests : PlaywrightSharpPageBaseTest
+    public sealed class TapTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public TapTests(ITestOutputHelper output) :
-                base(output)
+        public override BrowserNewContextOptions ContextOptions()
         {
-        }
-
-        /// <inheritdoc/>
-        public override async Task InitializeAsync()
-        {
-            await base.InitializeAsync();
-            Page = await Browser.NewPageAsync(new BrowserNewPageOptions { HasTouch = true });
+            return new() { HasTouch = true };
         }
 
         [PlaywrightTest("tap.spec.ts", "should send all of the correct events")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldSendAllOfTheCorrectEvents()
         {
             await Page.SetContentAsync(
@@ -61,7 +49,7 @@ namespace Microsoft.Playwright.Tests
 
             string[] result = await handle.JsonValueAsync<string[]>();
 
-            Assert.Equal(result, new string[]
+            Assert.AreEqual(result, new string[]
             {
                 "pointerover",  "pointerenter",
                 "pointerdown",  "touchstart",
@@ -74,7 +62,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("tap.spec.ts", "trial run should not tap")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task TrialRunShouldNotTap()
         {
             await Page.SetContentAsync(
@@ -83,13 +71,13 @@ namespace Microsoft.Playwright.Tests
 
             await Page.TapAsync("#a");
             var handle = await TrackEventsAsync("#b");
-            await Page.TapAsync("#b", new PageTapOptions { Trial = true });
+            await Page.TapAsync("#b", new() { Trial = true });
 
-            Assert.Empty(await handle.JsonValueAsync<string[]>());
+            Assert.IsEmpty(await handle.JsonValueAsync<string[]>());
         }
 
         [PlaywrightTest("tap.spec.ts", "should not send mouse events touchstart is canceled")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldNotSendMouseEventsTouchStartIsCanceled()
         {
             await Page.SetContentAsync(@"<div id=""a"" style=""background: lightblue; width: 50px; height: 50px"">a</div>");
@@ -103,7 +91,7 @@ namespace Microsoft.Playwright.Tests
 
             string[] result = await handle.JsonValueAsync<string[]>();
 
-            Assert.Equal(result, new string[]
+            Assert.AreEqual(result, new string[]
             {
                 "pointerover",  "pointerenter",
                 "pointerdown",  "touchstart",
@@ -113,7 +101,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("tap.spec.ts", "should not send mouse events when touchend is canceled")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldNotSendMouseEventsWhenTouchEndIsCanceled()
         {
             await Page.SetContentAsync(@"<div id=""a"" style=""background: lightblue; width: 50px; height: 50px"">a</div>");
@@ -127,7 +115,7 @@ namespace Microsoft.Playwright.Tests
 
             string[] result = await handle.JsonValueAsync<string[]>();
 
-            Assert.Equal(result, new string[]
+            Assert.AreEqual(result, new string[]
             {
                 "pointerover",  "pointerenter",
                 "pointerdown",  "touchstart",
@@ -137,12 +125,12 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("tap.spec.ts", "should wait for a navigation caused by a tap")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWaitForANavigationCausedByATap()
         {
             var requestResponse = new TaskCompletionSource<bool>();
             string route = "/intercept-this.html";
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
             Server.SetRoute(route, _ =>
             {
                 requestResponse.SetResult(true);
@@ -167,7 +155,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("tap.spec.ts", "should work with modifiers")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithModifiers()
         {
             await Page.SetContentAsync("hello world");
@@ -180,12 +168,12 @@ namespace Microsoft.Playwright.Tests
                     })");
 
             await Page.EvaluateAsync("() => void 0");
-            await Page.TapAsync("body", new PageTapOptions { Modifiers = new[] { KeyboardModifier.Alt } });
+            await Page.TapAsync("body", new() { Modifiers = new[] { KeyboardModifier.Alt } });
             Assert.True((await altKeyTask));
         }
 
         [PlaywrightTest("tap.spec.ts", "should send well formed touch points")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldSendWellFormedTouchPoints()
         {
             var touchStartTask = Page.EvaluateAsync<dynamic>(@"() =>
@@ -229,19 +217,19 @@ namespace Microsoft.Playwright.Tests
             var touchEndResult = await touchEndTask;
 
             Assert.Null(touchEndResult);
-            Assert.Equal(40, touchStartResult.clientX);
-            Assert.Equal(60, touchStartResult.clientY);
-            Assert.Equal(1, touchStartResult.force);
-            Assert.Equal(0, touchStartResult.identifier);
-            Assert.Equal(40, touchStartResult.pageX);
-            Assert.Equal(60, touchStartResult.pageY);
-            Assert.Equal(1, touchStartResult.radiusX);
-            Assert.Equal(1, touchStartResult.radiusY);
-            Assert.Equal(0, touchStartResult.rotationAngle);
+            Assert.AreEqual(40, touchStartResult.clientX);
+            Assert.AreEqual(60, touchStartResult.clientY);
+            Assert.AreEqual(1, touchStartResult.force);
+            Assert.AreEqual(0, touchStartResult.identifier);
+            Assert.AreEqual(40, touchStartResult.pageX);
+            Assert.AreEqual(60, touchStartResult.pageY);
+            Assert.AreEqual(1, touchStartResult.radiusX);
+            Assert.AreEqual(1, touchStartResult.radiusY);
+            Assert.AreEqual(0, touchStartResult.rotationAngle);
         }
 
         [PlaywrightTest("tap.spec.ts", "should wait until an element is visible to tap it")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWaitUntilAnElementIsVisibleToTapIt()
         {
             var div = (IElementHandle)await Page.EvaluateHandleAsync(@"() => {
@@ -259,7 +247,7 @@ namespace Microsoft.Playwright.Tests
 
             await tapTask;
 
-            Assert.Equal("clicked", await div.TextContentAsync());
+            Assert.AreEqual("clicked", await div.TextContentAsync());
         }
 
         private async Task<IJSHandle> TrackEventsAsync(string selector)

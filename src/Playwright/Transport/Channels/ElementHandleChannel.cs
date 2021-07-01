@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Playwright.Core;
 using Microsoft.Playwright.Helpers;
 
 namespace Microsoft.Playwright.Transport.Channels
@@ -47,7 +48,7 @@ namespace Microsoft.Playwright.Transport.Channels
             switch (method)
             {
                 case "previewUpdated":
-                    PreviewUpdated?.Invoke(this, new PreviewUpdatedEventArgs { Preview = serverParams.Value.GetProperty("preview").ToString() });
+                    PreviewUpdated?.Invoke(this, new() { Preview = serverParams.Value.GetProperty("preview").ToString() });
                     break;
             }
         }
@@ -104,7 +105,7 @@ namespace Microsoft.Playwright.Transport.Channels
             return (await Connection.SendMessageToServerAsync(Guid, "screenshot", args).ConfigureAwait(false))?.GetProperty("binary").ToString();
         }
 
-        internal Task<JsonElement?> EvalOnSelectorAsync(string selector, string script, bool isFunction, object arg)
+        internal Task<JsonElement?> EvalOnSelectorAsync(string selector, string script, object arg)
             => Connection.SendMessageToServerAsync<JsonElement?>(
                 Guid,
                 "evalOnSelector",
@@ -112,11 +113,10 @@ namespace Microsoft.Playwright.Transport.Channels
                 {
                     ["selector"] = selector,
                     ["expression"] = script,
-                    ["isFunction"] = isFunction,
                     ["arg"] = arg,
                 });
 
-        internal Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string script, bool isFunction, object arg)
+        internal Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string script, object arg)
             => Connection.SendMessageToServerAsync<JsonElement?>(
                 Guid,
                 "evalOnSelectorAll",
@@ -124,7 +124,6 @@ namespace Microsoft.Playwright.Transport.Channels
                 {
                     ["selector"] = selector,
                     ["expression"] = script,
-                    ["isFunction"] = isFunction,
                     ["arg"] = arg,
                 });
 
@@ -167,7 +166,7 @@ namespace Microsoft.Playwright.Transport.Channels
             args["button"] = button;
             args["clickCount"] = clickCount;
             args["force"] = force;
-            args["noWaitAter"] = noWaitAfter;
+            args["noWaitAfter"] = noWaitAfter;
             args["timeout"] = timeout;
             args["trial"] = trial;
             args["position"] = position;
@@ -190,7 +189,7 @@ namespace Microsoft.Playwright.Transport.Channels
             args["delay"] = delay;
             args["button"] = button;
             args["force"] = force;
-            args["noWaitAter"] = noWaitAfter;
+            args["noWaitAfter"] = noWaitAfter;
             args["timeout"] = timeout;
             args["trial"] = trial;
             args["position"] = position;
@@ -224,7 +223,7 @@ namespace Microsoft.Playwright.Transport.Channels
             var args = new Dictionary<string, object>();
             args["value"] = value;
             args["timeout"] = timeout;
-            args["noWaitAter"] = noWaitAfter;
+            args["noWaitAfter"] = noWaitAfter;
 
             return Connection.SendMessageToServerAsync(Guid, "fill", args);
         }
@@ -248,7 +247,7 @@ namespace Microsoft.Playwright.Transport.Channels
                 f.MimeType,
             });
             args["timeout"] = timeout;
-            args["noWaitAter"] = noWaitAfter;
+            args["noWaitAfter"] = noWaitAfter;
 
             return Connection.SendMessageToServerAsync<string>(Guid, "setInputFiles", args);
         }
@@ -294,7 +293,7 @@ namespace Microsoft.Playwright.Transport.Channels
             }
 
             args["timeout"] = timeout;
-            args["noWaitAter"] = noWaitAfter;
+            args["noWaitAfter"] = noWaitAfter;
 
             return (await Connection.SendMessageToServerAsync(Guid, "selectOption", args).ConfigureAwait(false))?.GetProperty("values").ToObject<List<string>>().AsReadOnly();
         }
@@ -324,7 +323,7 @@ namespace Microsoft.Playwright.Transport.Channels
             args["position"] = position;
             args["trial"] = trial;
             args["timeout"] = timeout;
-            args["noWaitAter"] = noWaitAfter;
+            args["noWaitAfter"] = noWaitAfter;
 
             return Connection.SendMessageToServerAsync<ElementHandleChannel>(Guid, "check", args);
         }
@@ -336,7 +335,7 @@ namespace Microsoft.Playwright.Transport.Channels
             args["position"] = position;
             args["trial"] = trial;
             args["timeout"] = timeout;
-            args["noWaitAter"] = noWaitAfter;
+            args["noWaitAfter"] = noWaitAfter;
 
             return Connection.SendMessageToServerAsync<ElementHandleChannel>(Guid, "uncheck", args);
         }
@@ -347,7 +346,7 @@ namespace Microsoft.Playwright.Transport.Channels
             args["text"] = text;
             args["delay"] = delay;
             args["timeout"] = timeout;
-            args["noWaitAter"] = noWaitAfter;
+            args["noWaitAfter"] = noWaitAfter;
 
             return Connection.SendMessageToServerAsync(Guid, "type", args);
         }
@@ -358,7 +357,7 @@ namespace Microsoft.Playwright.Transport.Channels
             args["key"] = key;
             args["delay"] = delay;
             args["timeout"] = timeout;
-            args["noWaitAter"] = noWaitAfter;
+            args["noWaitAfter"] = noWaitAfter;
 
             return Connection.SendMessageToServerAsync(Guid, "press", args);
         }

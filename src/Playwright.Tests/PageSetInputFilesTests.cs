@@ -1,35 +1,52 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
     ///<playwright-file>page-set-input-files.spec.ts</playwright-file>
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageSetInputFilesTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageSetInputFilesTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageSetInputFilesTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-set-input-files.spec.ts", "should upload the file")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldUploadTheFile()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/input/fileupload.html");
+            await Page.GotoAsync(Server.Prefix + "/input/fileupload.html");
             string filePath = Path.Combine(Directory.GetCurrentDirectory(), "Assets", TestConstants.FileToUpload);
             var input = await Page.QuerySelectorAsync("input");
             await input.SetInputFilesAsync(filePath);
-            Assert.Equal("file-to-upload.txt", await Page.EvaluateAsync<string>("e => e.files[0].name", input));
-            Assert.Equal("contents of the file", await Page.EvaluateAsync<string>(@"e => {
+            Assert.AreEqual("file-to-upload.txt", await Page.EvaluateAsync<string>("e => e.files[0].name", input));
+            Assert.AreEqual("contents of the file", await Page.EvaluateAsync<string>(@"e => {
                 var reader = new FileReader();
                 var promise = new Promise(fulfill => reader.onload = fulfill);
                 reader.readAsText(e.files[0]);
@@ -38,19 +55,19 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should work")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWork()
         {
             await Page.SetContentAsync("<input type=file>");
             string filePath = Path.Combine(Directory.GetCurrentDirectory(), "Assets", TestConstants.FileToUpload);
             await Page.SetInputFilesAsync("input", filePath);
 
-            Assert.Equal(1, await Page.EvalOnSelectorAsync<int>("input", "e => e.files.length"));
-            Assert.Equal("file-to-upload.txt", await Page.EvalOnSelectorAsync<string>("input", "e => e.files[0].name"));
+            Assert.AreEqual(1, await Page.EvalOnSelectorAsync<int>("input", "e => e.files.length"));
+            Assert.AreEqual("file-to-upload.txt", await Page.EvalOnSelectorAsync<string>("input", "e => e.files[0].name"));
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should set from memory")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldSetFromMemory()
         {
             await Page.SetContentAsync("<input type=file>");
@@ -62,12 +79,12 @@ namespace Microsoft.Playwright.Tests
                 Buffer = Encoding.UTF8.GetBytes("this is a test"),
             });
 
-            Assert.Equal(1, await Page.EvalOnSelectorAsync<int>("input", "e => e.files.length"));
-            Assert.Equal("test.txt", await Page.EvalOnSelectorAsync<string>("input", "e => e.files[0].name"));
+            Assert.AreEqual(1, await Page.EvalOnSelectorAsync<int>("input", "e => e.files.length"));
+            Assert.AreEqual("test.txt", await Page.EvalOnSelectorAsync<string>("input", "e => e.files[0].name"));
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should emit event once")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldEmitEventOnce()
         {
             await Page.SetContentAsync("<input type=file>");
@@ -86,35 +103,35 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should emit event on/off")]
-        [Fact(Skip = "We dont'need to test this")]
+        [Test, Ignore("We don't need to test this")]
         public void ShouldEmitEventOnOff()
         {
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should emit addListener/removeListener")]
-        [Fact(Skip = "We dont'need to test this")]
+        [Test, Ignore("We don't need to test this")]
         public void ShouldEmitEventAddListenerRemoveListener()
         {
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should work when file input is attached to DOM")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWhenFileInputIsAttachedToDOM()
         {
             await Page.SetContentAsync("<input type=file>");
             var chooser = await TaskUtils.WhenAll(
-                Page.WaitForEventAsync(PageEvent.FileChooser),
+                Page.WaitForFileChooserAsync(),
                 Page.ClickAsync("input")
             );
             Assert.NotNull(chooser?.Element);
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should work when file input is not attached to DOM")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWhenFileInputIsNotAttachedToDOM()
         {
             var (chooser, _) = await TaskUtils.WhenAll(
-                Page.WaitForEventAsync(PageEvent.FileChooser),
+                Page.WaitForFileChooserAsync(),
                 Page.EvaluateAsync(@"() => {
                     var el = document.createElement('input');
                     el.type = 'file';
@@ -126,45 +143,48 @@ namespace Microsoft.Playwright.Tests
 
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should work with CSP")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithCSP()
         {
             Server.SetCSP("/empty.html", "default-src \"none\"");
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
             await Page.SetContentAsync("<input type=file>");
 
             await Page.SetInputFilesAsync("input", Path.Combine(Directory.GetCurrentDirectory(), "Assets", TestConstants.FileToUpload));
-            Assert.Equal(1, await Page.EvalOnSelectorAsync<int>("input", "input => input.files.length"));
-            Assert.Equal("file-to-upload.txt", await Page.EvalOnSelectorAsync<string>("input", "input => input.files[0].name"));
+            Assert.AreEqual(1, await Page.EvalOnSelectorAsync<int>("input", "input => input.files.length"));
+            Assert.AreEqual("file-to-upload.txt", await Page.EvalOnSelectorAsync<string>("input", "input => input.files[0].name"));
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should respect timeout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public Task ShouldRespectTimeout() => Assert.ThrowsAsync<TimeoutException>(()
-            => Page.WaitForEventAsync(PageEvent.FileChooser, new PageWaitForEventOptions<IFileChooser> { Timeout = 1 }));
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public Task ShouldRespectTimeout()
+        {
+            return PlaywrightAssert.ThrowsAsync<TimeoutException>(()
+             => Page.WaitForFileChooserAsync(new() { Timeout = 1 }));
+        }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should respect default timeout when there is no custom timeout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public async Task ShouldRespectDefaultTimeoutWhenThereIsNoCustomTimeout()
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public Task ShouldRespectDefaultTimeoutWhenThereIsNoCustomTimeout()
         {
             Page.SetDefaultTimeout(1);
-            await Assert.ThrowsAsync<TimeoutException>(() => Page.WaitForEventAsync(PageEvent.FileChooser));
+            return PlaywrightAssert.ThrowsAsync<TimeoutException>(() => Page.WaitForFileChooserAsync());
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should prioritize exact timeout over default timeout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public async Task ShouldPrioritizeExactTimeoutOverDefaultTimeout()
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public Task ShouldPrioritizeExactTimeoutOverDefaultTimeout()
         {
             Page.SetDefaultTimeout(0);
-            await Assert.ThrowsAsync<TimeoutException>(() => Page.WaitForEventAsync(PageEvent.FileChooser, new PageWaitForEventOptions<IFileChooser> { Timeout = 1 }));
+            return PlaywrightAssert.ThrowsAsync<TimeoutException>(() => Page.WaitForFileChooserAsync(new() { Timeout = 1 }));
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should work with no timeout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithNoTimeout()
         {
             var (chooser, _) = await TaskUtils.WhenAll(
-                Page.WaitForEventAsync(PageEvent.FileChooser, new PageWaitForEventOptions<IFileChooser> { Timeout = 0 }),
+                Page.WaitForFileChooserAsync(new() { Timeout = 0 }),
                 Page.EvaluateAsync(@"() => setTimeout(() => {
                     var el = document.createElement('input');
                     el.type = 'file';
@@ -175,37 +195,37 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should return the same file chooser when there are many watchdogs simultaneously")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldReturnTheSameFileChooserWhenThereAreManyWatchdogsSimultaneously()
         {
             await Page.SetContentAsync("<input type=file>");
             var (fileChooser1, fileChooser2, _) = await TaskUtils.WhenAll(
-                Page.WaitForEventAsync(PageEvent.FileChooser),
-                Page.WaitForEventAsync(PageEvent.FileChooser),
+                Page.WaitForFileChooserAsync(),
+                Page.WaitForFileChooserAsync(),
                 Page.EvalOnSelectorAsync("input", "input => input.click()")
             );
-            Assert.Equal(fileChooser1, fileChooser2);
+            Assert.AreEqual(fileChooser1, fileChooser2);
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should accept single file")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldAcceptSingleFile()
         {
             await Page.SetContentAsync("<input type=file oninput='javascript:console.timeStamp()'>");
-            var fileChooser = await Page.RunAndWaitForEventAsync(PageEvent.FileChooser, async () =>
+            var fileChooser = await Page.RunAndWaitForFileChooserAsync(async () =>
             {
                 await Page.ClickAsync("input");
             });
 
-            Assert.Same(Page, fileChooser.Page);
+            Assert.AreEqual(Page, fileChooser.Page);
             Assert.NotNull(fileChooser.Element);
             await fileChooser.SetFilesAsync(TestConstants.FileToUpload);
-            Assert.Equal(1, await Page.EvalOnSelectorAsync<int>("input", "input => input.files.length"));
-            Assert.Equal("file-to-upload.txt", await Page.EvalOnSelectorAsync<string>("input", "input => input.files[0].name"));
+            Assert.AreEqual(1, await Page.EvalOnSelectorAsync<int>("input", "input => input.files.length"));
+            Assert.AreEqual("file-to-upload.txt", await Page.EvalOnSelectorAsync<string>("input", "input => input.files[0].name"));
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should detect mime type")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldDetectMimeType()
         {
             var files = new List<(string name, string mime, byte[] content)>();
@@ -221,7 +241,7 @@ namespace Microsoft.Playwright.Tests
                 return Task.CompletedTask;
             });
 
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
             await Page.SetContentAsync(@"
                 <form action=""/upload"" method=""post"" enctype=""multipart/form-data"">
                     <input type=""file"" name=""file1"">
@@ -238,23 +258,23 @@ namespace Microsoft.Playwright.Tests
                Server.WaitForRequest("/upload")
             );
 
-            Assert.Equal("file-to-upload.txt", files[0].name);
-            Assert.Equal("text/plain", files[0].mime);
-            Assert.Equal(File.ReadAllBytes(TestUtils.GetWebServerFile("file-to-upload.txt")), files[0].content);
+            Assert.AreEqual("file-to-upload.txt", files[0].name);
+            Assert.AreEqual("text/plain", files[0].mime);
+            Assert.AreEqual(File.ReadAllBytes(TestUtils.GetWebServerFile("file-to-upload.txt")), files[0].content);
 
-            Assert.Equal("pptr.png", files[1].name);
-            Assert.Equal("image/png", files[1].mime);
-            Assert.Equal(File.ReadAllBytes(TestUtils.GetWebServerFile("pptr.png")), files[1].content);
+            Assert.AreEqual("pptr.png", files[1].name);
+            Assert.AreEqual("image/png", files[1].mime);
+            Assert.AreEqual(File.ReadAllBytes(TestUtils.GetWebServerFile("pptr.png")), files[1].content);
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should be able to read selected file")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldBeAbleToReadSelectedFile()
         {
             await Page.SetContentAsync("<input type=file>");
-            _ = Page.WaitForEventAsync(PageEvent.FileChooser)
+            _ = Page.WaitForFileChooserAsync()
                 .ContinueWith(task => task.Result.SetFilesAsync(TestConstants.FileToUpload));
-            Assert.Equal("contents of the file", await Page.EvalOnSelectorAsync<string>("input", @"async picker => {
+            Assert.AreEqual("contents of the file", await Page.EvalOnSelectorAsync<string>("input", @"async picker => {
                 picker.click();
                 await new Promise(x => picker.oninput = x);
                 const reader = new FileReader();
@@ -265,20 +285,20 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should be able to reset selected files with empty file list")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldBeAbleToResetSelectedFilesWithEmptyFileList()
         {
             await Page.SetContentAsync("<input type=file>");
-            _ = Page.WaitForEventAsync(PageEvent.FileChooser)
+            _ = Page.WaitForFileChooserAsync()
                 .ContinueWith(task => task.Result.SetFilesAsync(TestConstants.FileToUpload));
-            Assert.Equal(1, await Page.EvalOnSelectorAsync<int>("input", @"async picker => {
+            Assert.AreEqual(1, await Page.EvalOnSelectorAsync<int>("input", @"async picker => {
                 picker.click();
                 await new Promise(x => picker.oninput = x);
                 return picker.files.length;
             }"));
-            _ = Page.WaitForEventAsync(PageEvent.FileChooser)
+            _ = Page.WaitForFileChooserAsync()
                 .ContinueWith(task => task.Result.Element.SetInputFilesAsync(new string[] { }));
-            Assert.Equal(0, await Page.EvalOnSelectorAsync<int>("input", @"async picker => {
+            Assert.AreEqual(0, await Page.EvalOnSelectorAsync<int>("input", @"async picker => {
                 picker.click();
                 await new Promise(x => picker.oninput = x);
                 return picker.files.length;
@@ -286,23 +306,24 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should not accept multiple files for single-file input")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldNotAcceptMultipleFilesForSingleFileInput()
         {
             await Page.SetContentAsync("<input type=file>");
             var fileChooser = await TaskUtils.WhenAll(
-               Page.WaitForEventAsync(PageEvent.FileChooser),
+               Page.WaitForFileChooserAsync(),
                Page.ClickAsync("input")
             );
-            await Assert.ThrowsAsync<PlaywrightException>(() => fileChooser.SetFilesAsync(new string[]
-            {
-                TestUtils.GetWebServerFile(TestConstants.FileToUpload),
-                TestUtils.GetWebServerFile("pptr.png"),
-            }));
+            await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() =>
+                fileChooser.SetFilesAsync(new string[]
+                {
+                    TestUtils.GetWebServerFile(TestConstants.FileToUpload),
+                    TestUtils.GetWebServerFile("pptr.png"),
+                }));
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should emit input and change events")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldEmitInputAndChangeEvents()
         {
             var events = new List<string>();
@@ -317,17 +338,17 @@ namespace Microsoft.Playwright.Tests
             ");
 
             await (await Page.QuerySelectorAsync("input")).SetInputFilesAsync(TestUtils.GetWebServerFile("file-to-upload.txt"));
-            Assert.Equal(2, events.Count);
-            Assert.Equal("input", events[0]);
-            Assert.Equal("change", events[1]);
+            Assert.AreEqual(2, events.Count);
+            Assert.AreEqual("input", events[0]);
+            Assert.AreEqual("change", events[1]);
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", "should work for single file pick")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkForSingleFilePick()
         {
             await Page.SetContentAsync("<input type=file>");
-            var waitTask = Page.WaitForEventAsync(PageEvent.FileChooser);
+            var waitTask = Page.WaitForFileChooserAsync();
 
             var fileChooser = await TaskUtils.WhenAll(
                waitTask,
@@ -337,24 +358,24 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", @"should work for ""multiple""")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkForMultiple()
         {
             await Page.SetContentAsync("<input multiple type=file>");
             var fileChooser = await TaskUtils.WhenAll(
-               Page.WaitForEventAsync(PageEvent.FileChooser),
+               Page.WaitForFileChooserAsync(),
                Page.ClickAsync("input")
             );
             Assert.True(fileChooser.IsMultiple);
         }
 
         [PlaywrightTest("page-set-input-files.spec.ts", @"should work for ""webkitdirectory""")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkForWebkitdirectory()
         {
             await Page.SetContentAsync("<input multiple webkitdirectory type=file>");
             var fileChooser = await TaskUtils.WhenAll(
-               Page.WaitForEventAsync(PageEvent.FileChooser),
+               Page.WaitForFileChooserAsync(),
                Page.ClickAsync("input")
             );
             Assert.True(fileChooser.IsMultiple);

@@ -1,92 +1,109 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageAutoWaitingNotHangTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageAutoWaitingNotHangTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageAutoWaitingNotHangTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-autowaiting-no-hang.spec.ts", "clicking on links which do not commit navigation")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ClickingOnLinksWhichDoNotCommitNavigation()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            await Page.SetContentAsync($"<a href=\"{TestConstants.EmptyPage}\">fooobar</a>");
+            await Page.GotoAsync(Server.EmptyPage);
+            await Page.SetContentAsync($"<a href=\"{Server.EmptyPage}\">fooobar</a>");
             await Page.ClickAsync("a");
         }
 
         [PlaywrightTest("page-autowaiting-no-hang.spec.ts", "calling window.stop async")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public async Task CallingWindowStopAsync()
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public Task CallingWindowStopAsync()
         {
             Server.SetRoute("/empty.html", _ => Task.CompletedTask);
 
-            await Page.EvaluateAsync($@"(url) => {{
+            return Page.EvaluateAsync($@"(url) => {{
                 window.location.href = url;
                 setTimeout(() => window.stop(), 100);
-             }}", TestConstants.EmptyPage);
+             }}", Server.EmptyPage);
         }
 
         [PlaywrightTest("page-autowaiting-no-hang.spec.ts", "calling window.stop")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public async Task CallingWindowStop()
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public Task CallingWindowStop()
         {
             Server.SetRoute("/empty.html", _ => Task.CompletedTask);
 
-            await Page.EvaluateAsync($@"(url) => {{
+            return Page.EvaluateAsync($@"(url) => {{
                 window.location.href = url;
                 window.stop();
-             }}", TestConstants.EmptyPage);
+             }}", Server.EmptyPage);
         }
 
         [PlaywrightTest("page-autowaiting-no-hang.spec.ts", "assigning location to about:blank")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task AssigningLocationToAboutBlank()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
             await Page.EvaluateAsync("window.location.href = 'about:blank';");
         }
 
         [PlaywrightTest("page-autowaiting-no-hang.spec.ts", "assigning location to about:blank after non-about:blank")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public async Task AssigningLocationToAboutBlankAfterNonAboutBlank()
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public Task AssigningLocationToAboutBlankAfterNonAboutBlank()
         {
             Server.SetRoute("/empty.html", _ => Task.CompletedTask);
 
-            await Page.EvaluateAsync($@"(url) => {{
-                window.location.href = '{TestConstants.EmptyPage}';
+            return Page.EvaluateAsync($@"(url) => {{
+                window.location.href = '{Server.EmptyPage}';
                 window.location.href = 'about:blank';
-             }}", TestConstants.EmptyPage);
+             }}", Server.EmptyPage);
         }
 
         [PlaywrightTest("page-autowaiting-no-hang.spec.ts", "calling window.open and window.close")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task CallingWindowOpenAndWindowClose()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
 
             await Page.EvaluateAsync($@"(url) => {{
                 const popup = window.open(window.location.href);
                 popup.close();
-             }}", TestConstants.EmptyPage);
+             }}", Server.EmptyPage);
         }
 
         [PlaywrightTest("page-autowaiting-no-hang.spec.ts", "opening a popup")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task OpeningAPopup()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
 
             await TaskUtils.WhenAll(
-                Page.WaitForEventAsync(PageEvent.Popup),
+                Page.WaitForPopupAsync(),
                 Page.EvaluateAsync("() => window._popup = window.open(window.location.href)"));
         }
     }

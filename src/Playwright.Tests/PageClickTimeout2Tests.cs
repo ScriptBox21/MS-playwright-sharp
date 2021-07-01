@@ -1,51 +1,64 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Helpers;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageClickTimeout2Tests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageClickTimeout2Tests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageClickTimeout2Tests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-click-timeout-2.spec.ts", "should timeout waiting for display:none to be gone")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldTimeoutWaitingForDisplayNoneToBeGone()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/input/button.html");
+            await Page.GotoAsync(Server.Prefix + "/input/button.html");
             await Page.EvalOnSelectorAsync("button", "b => b.style.display = 'none'");
-            var exception = await Assert.ThrowsAsync<TimeoutException>(()
-                => Page.ClickAsync("button", new PageClickOptions { Timeout = 5000 }));
+            var exception = await PlaywrightAssert.ThrowsAsync<TimeoutException>(()
+                => Page.ClickAsync("button", new() { Timeout = 5000 }));
 
-            Assert.Contains("Timeout 5000ms exceeded", exception.Message);
-            Assert.Contains("waiting for element to be visible, enabled and stable", exception.Message);
-            Assert.Contains("element is not visible - waiting", exception.Message);
+            StringAssert.Contains("Timeout 5000ms exceeded", exception.Message);
+            StringAssert.Contains("waiting for element to be visible, enabled and stable", exception.Message);
+            StringAssert.Contains("element is not visible - waiting", exception.Message);
         }
 
-        [PlaywrightTest("page-click-timeout-2.spec.ts", "should timeout waiting for visbility:hidden to be gone")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public async Task ShouldTimeoutWaitingForVisbilityHiddenToBeGone()
+        [PlaywrightTest("page-click-timeout-2.spec.ts", "should timeout waiting for visibility:hidden to be gone")]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public async Task ShouldTimeoutWaitingForVisibilityHiddenToBeGone()
         {
-            await Page.GotoAsync(TestConstants.ServerUrl + "/input/button.html");
+            await Page.GotoAsync(Server.Prefix + "/input/button.html");
             await Page.EvalOnSelectorAsync("button", "b => b.style.visibility = 'hidden'");
-            var clickTask = Page.ClickAsync("button", new PageClickOptions { Timeout = 5000 });
-            var exception = await Assert.ThrowsAsync<TimeoutException>(()
-                => Page.ClickAsync("button", new PageClickOptions { Timeout = 5000 }));
+            var clickTask = Page.ClickAsync("button", new() { Timeout = 5000 });
+            var exception = await PlaywrightAssert.ThrowsAsync<TimeoutException>(()
+                => Page.ClickAsync("button", new() { Timeout = 5000 }));
 
-            Assert.Contains("Timeout 5000ms exceeded", exception.Message);
-            Assert.Contains("waiting for element to be visible, enabled and stable", exception.Message);
-            Assert.Contains("element is not visible - waiting", exception.Message);
+            StringAssert.Contains("Timeout 5000ms exceeded", exception.Message);
+            StringAssert.Contains("waiting for element to be visible, enabled and stable", exception.Message);
+            StringAssert.Contains("element is not visible - waiting", exception.Message);
         }
 
     }

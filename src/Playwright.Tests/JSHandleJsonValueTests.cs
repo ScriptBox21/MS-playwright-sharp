@@ -1,46 +1,63 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class JSHandleJsonValueTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class JSHandleJsonValueTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public JSHandleJsonValueTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("jshandle-json-value.spec.ts", "should work")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWork()
         {
             var aHandle = await Page.EvaluateHandleAsync("() => ({ foo: 'bar'})");
             var json = await aHandle.JsonValueAsync<JsonElement>();
-            Assert.Equal("bar", json.GetProperty("foo").GetString());
+            Assert.AreEqual("bar", json.GetProperty("foo").GetString());
         }
 
         [PlaywrightTest("jshandle-json-value.spec.ts", "should work with dates")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithDates()
         {
             var dateHandle = await Page.EvaluateHandleAsync("() => new Date('2017-09-26T00:00:00.000Z')");
             var json = await dateHandle.JsonValueAsync<DateTime>();
-            Assert.Equal(2017, json.Year);
+            Assert.AreEqual(2017, json.Year);
         }
 
         [PlaywrightTest("jshandle-json-value.spec.ts", "should throw for circular objects")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldThrowForCircularObjects()
         {
             var windowHandle = await Page.EvaluateHandleAsync("window");
-            var exception = await Assert.ThrowsAnyAsync<PlaywrightException>(() => windowHandle.JsonValueAsync<object>());
-            Assert.Contains("Argument is a circular structure", exception.Message);
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => windowHandle.JsonValueAsync<object>());
+            StringAssert.Contains("Argument is a circular structure", exception.Message);
         }
     }
 }

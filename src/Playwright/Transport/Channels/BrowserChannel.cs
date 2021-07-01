@@ -1,9 +1,34 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.Playwright.Core;
 using Microsoft.Playwright.Transport.Protocol;
 
 namespace Microsoft.Playwright.Transport.Channels
@@ -30,6 +55,7 @@ namespace Microsoft.Playwright.Transport.Channels
             bool? acceptDownloads = null,
             bool? bypassCSP = null,
             ColorScheme? colorScheme = null,
+            ReducedMotion? reducedMotion = null,
             float? deviceScaleFactor = null,
             IEnumerable<KeyValuePair<string, string>> extraHTTPHeaders = null,
             Geolocation geolocation = null,
@@ -44,18 +70,19 @@ namespace Microsoft.Playwright.Transport.Channels
             Proxy proxy = null,
             bool? recordHarOmitContent = null,
             string recordHarPath = null,
-            string recordVideoDir = null,
-            RecordVideoSize recordVideoSize = null,
+            Dictionary<string, object> recordVideo = null,
             string storageState = null,
             string storageStatePath = null,
             string timezoneId = null,
             string userAgent = null,
-            ViewportSize viewportSize = default)
+            ViewportSize viewportSize = default,
+            ScreenSize screenSize = default)
         {
             var args = new Dictionary<string, object>();
             args.Add("acceptDownloads", acceptDownloads);
             args.Add("bypassCSP", bypassCSP);
             args.Add("colorScheme", colorScheme);
+            args.Add("reducedMotion", reducedMotion);
             args.Add("deviceScaleFactor", deviceScaleFactor);
 
             if (extraHTTPHeaders != null)
@@ -73,6 +100,7 @@ namespace Microsoft.Playwright.Transport.Channels
             args.Add("offline", offline);
             args.Add("permissions", permissions);
             args.Add("proxy", proxy);
+
             if (!string.IsNullOrEmpty(recordHarPath))
             {
                 args.Add("recordHar", new
@@ -82,17 +110,26 @@ namespace Microsoft.Playwright.Transport.Channels
                 });
             }
 
-            if (!string.IsNullOrEmpty(recordVideoDir))
+            if (recordVideo != null)
             {
-                args.Add("recordVideo", new Dictionary<string, object>()
-                {
-                    { "dir", recordVideoDir },
-                    { "size", recordVideoSize },
-                });
+                args.Add("recordVideo", recordVideo);
             }
 
-            args.Add("storageState", storageState);
-            args.Add("storageStatePath", storageStatePath);
+            if (!string.IsNullOrEmpty(storageStatePath))
+            {
+                if (!File.Exists(storageStatePath))
+                {
+                    throw new PlaywrightException($"The specified storage state file does not exist: {storageStatePath}");
+                }
+
+                storageState = File.ReadAllText(storageStatePath);
+            }
+
+            if (!string.IsNullOrEmpty(storageState))
+            {
+                args.Add("storageState", JsonSerializer.Deserialize<StorageState>(storageState, Helpers.JsonExtensions.DefaultJsonSerializerOptions));
+            }
+
             args.Add("timezoneId", timezoneId);
             args.Add("userAgent", userAgent);
 
@@ -103,6 +140,7 @@ namespace Microsoft.Playwright.Transport.Channels
             else
             {
                 args.Add("viewport", viewportSize);
+                args.Add("screen", screenSize);
             }
 
             args["sdkLanguage"] = "csharp";

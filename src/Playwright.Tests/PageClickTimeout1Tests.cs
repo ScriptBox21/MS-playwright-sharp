@@ -1,38 +1,55 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageClickTimeout1Tests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageClickTimeout1Tests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageClickTimeout1Tests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-click-timeout-1.spec.ts", "should avoid side effects after timeout")]
-        [Fact(Skip = "Ignore USES_HOOKS")]
+        [Test, Ignore("Ignore USES_HOOKS")]
         public void ShouldAvoidSideEffectsAfterTimeout()
         {
         }
 
         [PlaywrightTest("page-click-timeout-1.spec.ts", "should timeout waiting for button to be enabled")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldTimeoutWaitingForButtonToBeEnabled()
         {
             await Page.SetContentAsync("<button onclick=\"javascript: window.__CLICKED = true;\" disabled><span>Click target</span></button>");
-            var clickTask = Page.ClickAsync("text=Click target", new PageClickOptions { Timeout = 3000 });
+            var clickTask = Page.ClickAsync("text=Click target", new() { Timeout = 3000 });
             Assert.Null(await Page.EvaluateAsync<bool?>("window.__CLICKED"));
 
-            var exception = await Assert.ThrowsAsync<TimeoutException>(() => clickTask);
+            var exception = await PlaywrightAssert.ThrowsAsync<TimeoutException>(() => clickTask);
 
-            Assert.Contains("Timeout 3000ms exceeded", exception.Message);
-            Assert.Contains("element is not enabled - waiting", exception.Message);
+            StringAssert.Contains("Timeout 3000ms exceeded", exception.Message);
+            StringAssert.Contains("element is not enabled - waiting", exception.Message);
         }
     }
 }

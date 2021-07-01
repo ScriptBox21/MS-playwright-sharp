@@ -1,32 +1,48 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageFocusTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageFocusTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageFocusTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-focus.spec.ts", "should work")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWork()
         {
             await Page.SetContentAsync("<div id=d1 tabIndex=0></div>");
-            Assert.Equal("BODY", await Page.EvaluateAsync<string>("() => document.activeElement.nodeName"));
+            Assert.AreEqual("BODY", await Page.EvaluateAsync<string>("() => document.activeElement.nodeName"));
             await Page.FocusAsync("#d1");
-            Assert.Equal("d1", await Page.EvaluateAsync<string>("() => document.activeElement.id"));
+            Assert.AreEqual("d1", await Page.EvaluateAsync<string>("() => document.activeElement.id"));
         }
 
         [PlaywrightTest("page-focus.spec.ts", "should emit focus event")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldEmitFocusEvent()
         {
             await Page.SetContentAsync("<div id=d1 tabIndex=0></div>");
@@ -38,7 +54,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-focus.spec.ts", "should emit blur event")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldEmitBlurEvent()
         {
             await Page.SetContentAsync("<div id=d1 tabIndex=0>DIV1</div><div id=d2 tabIndex=0>DIV2</div>");
@@ -55,7 +71,7 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-focus.spec.ts", "should traverse focus")]
-        [SkipBrowserAndPlatformFact(skipWebkit: true, skipWindows: true, skipOSX: true)]
+        [Test, SkipBrowserAndPlatform(skipWebkit: true, skipWindows: true, skipOSX: true)]
         public async Task ShouldTraverseFocus()
         {
             await Page.SetContentAsync("<input id=\"i1\"><input id=\"i2\">");
@@ -70,8 +86,8 @@ namespace Microsoft.Playwright.Tests
 
             Assert.True(focused);
 
-            Assert.Equal("First", await Page.EvalOnSelectorAsync<string>("#i1", "e => e.value"));
-            Assert.Equal("Last", await Page.EvalOnSelectorAsync<string>("#i2", "e => e.value"));
+            Assert.AreEqual("First", await Page.EvalOnSelectorAsync<string>("#i1", "e => e.value"));
+            Assert.AreEqual("Last", await Page.EvalOnSelectorAsync<string>("#i2", "e => e.value"));
         }
     }
 }

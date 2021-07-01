@@ -1,27 +1,44 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageWaitForRequestTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageWaitForRequestTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageWaitForRequestTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-wait-for-request.spec.ts", "should work")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWork()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            var task = Page.WaitForRequestAsync(TestConstants.ServerUrl + "/digits/2.png");
+            await Page.GotoAsync(Server.EmptyPage);
+            var task = Page.WaitForRequestAsync(Server.Prefix + "/digits/2.png");
             var (request, _) = await TaskUtils.WhenAll(
                 task,
                 Page.EvaluateAsync(@"() => {
@@ -30,15 +47,15 @@ namespace Microsoft.Playwright.Tests
                   fetch('/digits/3.png');
                 }")
             );
-            Assert.Equal(TestConstants.ServerUrl + "/digits/2.png", request.Url);
+            Assert.AreEqual(Server.Prefix + "/digits/2.png", request.Url);
         }
 
         [PlaywrightTest("page-wait-for-request.spec.ts", "should work with predicate")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithPredicate()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            var task = Page.WaitForRequestAsync(e => e.Url == TestConstants.ServerUrl + "/digits/2.png");
+            await Page.GotoAsync(Server.EmptyPage);
+            var task = Page.WaitForRequestAsync(e => e.Url == Server.Prefix + "/digits/2.png");
             var (requestEvent, _) = await TaskUtils.WhenAll(
                 task,
                 Page.EvaluateAsync<string>(@"() => {
@@ -47,32 +64,32 @@ namespace Microsoft.Playwright.Tests
                     fetch('/digits/3.png');
                 }")
             );
-            Assert.Equal(TestConstants.ServerUrl + "/digits/2.png", requestEvent.Url);
+            Assert.AreEqual(Server.Prefix + "/digits/2.png", requestEvent.Url);
         }
 
         [PlaywrightTest("page-wait-for-request.spec.ts", "should respect timeout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public async Task ShouldRespectTimeout()
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public Task ShouldRespectTimeout()
         {
-            var exception = await Assert.ThrowsAsync<TimeoutException>(
-                () => Page.WaitForRequestAsync(_ => false, new PageWaitForRequestOptions { Timeout = 1 }));
+            return PlaywrightAssert.ThrowsAsync<TimeoutException>(
+                () => Page.WaitForRequestAsync(_ => false, new() { Timeout = 1 }));
         }
 
         [PlaywrightTest("page-wait-for-request.spec.ts", "should respect default timeout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public async Task ShouldRespectDefaultTimeout()
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public Task ShouldRespectDefaultTimeout()
         {
             Page.SetDefaultTimeout(1);
-            var exception = await Assert.ThrowsAsync<TimeoutException>(
+            return PlaywrightAssert.ThrowsAsync<TimeoutException>(
                 () => Page.WaitForRequestAsync(_ => false));
         }
 
         [PlaywrightTest("page-wait-for-request.spec.ts", "should work with no timeout")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithNoTimeout()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
-            var task = Page.WaitForRequestAsync(TestConstants.ServerUrl + "/digits/2.png", new PageWaitForRequestOptions { Timeout = 0 });
+            await Page.GotoAsync(Server.EmptyPage);
+            var task = Page.WaitForRequestAsync(Server.Prefix + "/digits/2.png", new() { Timeout = 0 });
             var (request, _) = await TaskUtils.WhenAll(
                 task,
                 Page.EvaluateAsync(@"() => setTimeout(() => {
@@ -81,14 +98,14 @@ namespace Microsoft.Playwright.Tests
                     fetch('/digits/3.png');
                 }, 50)")
             );
-            Assert.Equal(TestConstants.ServerUrl + "/digits/2.png", request.Url);
+            Assert.AreEqual(Server.Prefix + "/digits/2.png", request.Url);
         }
 
         [PlaywrightTest("page-wait-for-request.spec.ts", "should work with url match")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkWithUrlMatch()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
             var task = Page.WaitForRequestAsync(new Regex(@"/digits/\d.png"));
             var (request, _) = await TaskUtils.WhenAll(
                 task,
@@ -96,11 +113,11 @@ namespace Microsoft.Playwright.Tests
                     fetch('/digits/1.png');
                 }")
             );
-            Assert.Equal(TestConstants.ServerUrl + "/digits/1.png", request.Url);
+            Assert.AreEqual(Server.Prefix + "/digits/1.png", request.Url);
         }
 
         [PlaywrightTest("page-wait-for-request.spec.ts", "should work with url match regular expression from a different context")]
-        [Fact(Skip = "We dont't need to test this")]
+        [Test, Ignore("We don't need to test this")]
         public void ShouldWorkWithUrlMatchRegularExpressionFromADifferentContext()
         {
         }

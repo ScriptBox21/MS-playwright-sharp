@@ -24,6 +24,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -33,6 +34,8 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+
+#nullable enable
 
 namespace Microsoft.Playwright
 {
@@ -51,7 +54,7 @@ namespace Microsoft.Playwright
     /// once download completes:
     /// </para>
     /// <code>
-    /// var download = await page.RunAndWaitForEventAsync(PageEvent.Download, async () =&gt;<br/>
+    /// var download = await page.RunAndWaitForDownloadAsync(async () =&gt;<br/>
     /// {<br/>
     ///     await page.ClickAsync("#downloadButton");<br/>
     /// });<br/>
@@ -69,13 +72,16 @@ namespace Microsoft.Playwright
     public partial interface IDownload
     {
         /// <summary><para>Returns readable stream for current download or <c>null</c> if download failed.</para></summary>
-        Task<Stream> CreateReadStreamAsync();
+        Task<Stream?> CreateReadStreamAsync();
 
         /// <summary><para>Deletes the downloaded file. Will wait for the download to finish if necessary.</para></summary>
         Task DeleteAsync();
 
         /// <summary><para>Returns download error if any. Will wait for the download to finish if necessary.</para></summary>
-        Task<string> FailureAsync();
+        Task<string?> FailureAsync();
+
+        /// <summary><para>Get the page that the download belongs to.</para></summary>
+        IPage Page { get; }
 
         /// <summary>
         /// <para>
@@ -83,7 +89,7 @@ namespace Microsoft.Playwright
         /// wait for the download to finish if necessary. The method throws when connected remotely.
         /// </para>
         /// </summary>
-        Task<string> PathAsync();
+        Task<string?> PathAsync();
 
         /// <summary>
         /// <para>
@@ -108,3 +114,5 @@ namespace Microsoft.Playwright
         string Url { get; }
     }
 }
+
+#nullable disable

@@ -1,82 +1,95 @@
-using System;
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Threading.Tasks;
-using Microsoft.Playwright.Helpers;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageEventCrashTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageEventCrashTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageEventCrashTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         // We skip all browser because crash uses internals.
         [PlaywrightTest("page-event-crash.spec.ts", "should emit crash event when page crashes")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldEmitCrashEventWhenPageCrashes()
         {
             await Page.SetContentAsync("<div>This page should crash</div>");
-            var crashTask = Page.WaitForEventAsync(PageEvent.Crash);
+            var crashEvent = new TaskCompletionSource<bool>();
+            Page.Crash += (_, _) => crashEvent.TrySetResult(true);
+
             await CrashAsync(Page);
-            await crashTask.WithTimeout(TestConstants.DefaultTaskTimeout);
+            await crashEvent.Task;
         }
 
         // We skip all browser because crash uses internals.
         [PlaywrightTest("page-event-crash.spec.ts", "should throw on any action after page crashes")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldThrowOnAnyActionAfterPageCrashes()
         {
             await Page.SetContentAsync("<div>This page should crash</div>");
-            var crashTask = Page.WaitForEventAsync(PageEvent.Crash);
+            var crashEvent = new TaskCompletionSource<bool>();
+            Page.Crash += (_, _) => crashEvent.TrySetResult(true);
+
             await CrashAsync(Page);
-            await crashTask.WithTimeout(TestConstants.DefaultTaskTimeout);
-            var exception = await Assert.ThrowsAnyAsync<PlaywrightException>(() => Page.EvaluateAsync("() => {}"));
-            Assert.Contains("crash", exception.Message);
+            await crashEvent.Task;
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => Page.EvaluateAsync("() => {}"));
+            StringAssert.Contains("crash", exception.Message);
         }
 
         // We skip all browser because crash uses internals.
         [PlaywrightTest("page-event-crash.spec.ts", "should cancel waitForEvent when page crashes")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldCancelWaitForEventWhenPageCrashes()
         {
             await Page.SetContentAsync("<div>This page should crash</div>");
-            var responseTask = Page.WaitForEventAsync(PageEvent.Response);
+            var responseTask = Page.WaitForResponseAsync("**/*");
             await CrashAsync(Page);
-            var exception = await Assert.ThrowsAnyAsync<PlaywrightException>(() => responseTask.WithTimeout(TestConstants.DefaultTaskTimeout));
-            Assert.Contains("Page crashed", exception.Message);
+            var exception = await PlaywrightAssert.ThrowsAsync<PlaywrightException>(() => responseTask);
+            StringAssert.Contains("Page crashed", exception.Message);
         }
 
         // We skip all browser because crash uses internals.
         [PlaywrightTest("page-event-crash.spec.ts", "should cancel navigation when page crashes")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
-        public async Task ShouldCancelNavigationWhenPageCrashes()
+        [Ignore("Not relevant downstream")]
+        public void ShouldCancelNavigationWhenPageCrashes()
         {
-            await Page.SetContentAsync("<div>This page should crash</div>");
-            Server.SetRoute("/one-style.css", _ => Task.Delay(2000));
-            var task = Page.GotoAsync(TestConstants.ServerUrl + "/one-style.html");
-            await Page.WaitForNavigationAsync(new PageWaitForNavigationOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
-
-            await CrashAsync(Page);
-            var exception = await Assert.ThrowsAnyAsync<PlaywrightException>(() => task);
-            Assert.Contains("Navigation failed because page crashed", exception.Message);
         }
 
         // We skip all browser because crash uses internals.
         [PlaywrightTest("page-event-crash.spec.ts", "should be able to close context when page crashes")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true, skipWebkit: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true, skipWebkit: true)]
         public async Task ShouldBeAbleToCloseContextWhenPageCrashes()
         {
             await Page.SetContentAsync("<div>This page should crash</div>");
-            var crashTask = Page.WaitForEventAsync(PageEvent.Crash);
+
+            var crashEvent = new TaskCompletionSource<bool>();
+            Page.Crash += (_, _) => crashEvent.TrySetResult(true);
+
             await CrashAsync(Page);
-            await crashTask.WithTimeout(TestConstants.DefaultTaskTimeout);
+            await crashEvent.Task;
             await Page.Context.CloseAsync();
         }
 

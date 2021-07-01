@@ -24,12 +24,11 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Playwright.Core;
 using Microsoft.Playwright.Helpers;
-using Microsoft.Playwright.Transport.Converters;
 
 namespace Microsoft.Playwright.Transport.Channels
 {
@@ -77,7 +76,6 @@ namespace Microsoft.Playwright.Transport.Channels
 
         internal Task<JSHandleChannel> EvaluateExpressionHandleAsync(
             string script,
-            bool isFunction,
             object arg)
         {
             return Connection.SendMessageToServerAsync<JSHandleChannel>(
@@ -86,21 +84,18 @@ namespace Microsoft.Playwright.Transport.Channels
                 new Dictionary<string, object>
                 {
                     ["expression"] = script,
-                    ["isFunction"] = isFunction,
                     ["arg"] = arg,
                 });
         }
 
         internal Task<JSHandleChannel> WaitForFunctionAsync(
             string expression,
-            bool isFunction,
             object arg,
             float? timeout,
             float? polling)
         {
             var args = new Dictionary<string, object>();
             args["expression"] = expression;
-            args["isFunction"] = isFunction;
             args["arg"] = arg;
             args["timeout"] = timeout;
             args["pollingInterval"] = polling;
@@ -112,7 +107,6 @@ namespace Microsoft.Playwright.Transport.Channels
 
         internal Task<JsonElement?> EvaluateExpressionAsync(
             string script,
-            bool isFunction,
             object arg)
         {
             return Connection.SendMessageToServerAsync<JsonElement?>(
@@ -121,12 +115,11 @@ namespace Microsoft.Playwright.Transport.Channels
                 new Dictionary<string, object>
                 {
                     ["expression"] = script,
-                    ["isFunction"] = isFunction,
                     ["arg"] = arg,
                 });
         }
 
-        internal Task<JsonElement?> EvalOnSelectorAsync(string selector, string script, bool isFunction, object arg)
+        internal Task<JsonElement?> EvalOnSelectorAsync(string selector, string script, object arg)
             => Connection.SendMessageToServerAsync<JsonElement?>(
                 Guid,
                 "evalOnSelector",
@@ -134,11 +127,10 @@ namespace Microsoft.Playwright.Transport.Channels
                 {
                     ["selector"] = selector,
                     ["expression"] = script,
-                    ["isFunction"] = isFunction,
                     ["arg"] = arg,
                 });
 
-        internal Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string script, bool isFunction, object arg)
+        internal Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string script, object arg)
             => Connection.SendMessageToServerAsync<JsonElement?>(
                 Guid,
                 "evalOnSelectorAll",
@@ -146,7 +138,6 @@ namespace Microsoft.Playwright.Transport.Channels
                 {
                     ["selector"] = selector,
                     ["expression"] = script,
-                    ["isFunction"] = isFunction,
                     ["arg"] = arg,
                 });
 

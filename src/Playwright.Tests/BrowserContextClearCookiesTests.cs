@@ -1,42 +1,60 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2020 Darío Kondratiuk
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class BrowserContextClearCookiesTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class BrowserContextClearCookiesTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public BrowserContextClearCookiesTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("browsercontext-clearcookies.spec.ts", "should clear cookies")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
-        public async Task ShouldClearCookes()
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public async Task ShouldClearCookies()
         {
-            await Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.GotoAsync(Server.EmptyPage);
             await Context.AddCookiesAsync(new[]
             {
                 new Cookie
                 {
-                    Url = TestConstants.EmptyPage,
+                    Url = Server.EmptyPage,
                     Name = "cookie1",
                     Value = "1"
                 }
             });
-            Assert.Equal("cookie1=1", await Page.EvaluateAsync<string>("document.cookie"));
+            Assert.AreEqual("cookie1=1", await Page.EvaluateAsync<string>("document.cookie"));
             await Context.ClearCookiesAsync();
-            Assert.Empty(await Context.CookiesAsync());
+            Assert.IsEmpty(await Context.CookiesAsync());
             await Page.ReloadAsync();
-            Assert.Empty(await Page.EvaluateAsync<string>("document.cookie"));
+            Assert.IsEmpty(await Page.EvaluateAsync<string>("document.cookie"));
         }
 
         [PlaywrightTest("browsercontext-clearcookies.spec.ts", "should isolate cookies when clearing")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldIsolateWhenClearing()
         {
             await using var anotherContext = await Browser.NewContextAsync();
@@ -46,7 +64,7 @@ namespace Microsoft.Playwright.Tests
                 {
                     Name = "page1cookie",
                     Value = "page1value",
-                    Url = TestConstants.EmptyPage
+                    Url = Server.EmptyPage
                 }
             });
 
@@ -56,20 +74,20 @@ namespace Microsoft.Playwright.Tests
                 {
                     Name = "page2cookie",
                     Value = "page2value",
-                    Url = TestConstants.EmptyPage
+                    Url = Server.EmptyPage
                 }
             });
 
-            Assert.Single(await Context.CookiesAsync());
-            Assert.Single(await anotherContext.CookiesAsync());
+            Assert.That(await Context.CookiesAsync(), Has.Count.EqualTo(1));
+            Assert.That(await anotherContext.CookiesAsync(), Has.Count.EqualTo(1));
 
             await Context.ClearCookiesAsync();
-            Assert.Empty((await Context.CookiesAsync()));
-            Assert.Single((await anotherContext.CookiesAsync()));
+            Assert.IsEmpty((await Context.CookiesAsync()));
+            Assert.That((await anotherContext.CookiesAsync()), Has.Count.EqualTo(1));
 
             await anotherContext.ClearCookiesAsync();
-            Assert.Empty(await Context.CookiesAsync());
-            Assert.Empty(await anotherContext.CookiesAsync());
+            Assert.IsEmpty(await Context.CookiesAsync());
+            Assert.IsEmpty(await anotherContext.CookiesAsync());
         }
     }
 }

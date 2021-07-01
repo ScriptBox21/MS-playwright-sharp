@@ -1,14 +1,36 @@
-using System;
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Playwright.Helpers;
 
 namespace Microsoft.Playwright.Transport.Channels
 {
-    internal class BrowserTypeChannel : Channel<BrowserType>
+    internal class BrowserTypeChannel : Channel<Core.BrowserType>
     {
-        public BrowserTypeChannel(string guid, Connection connection, BrowserType owner) : base(guid, connection, owner)
+        public BrowserTypeChannel(string guid, Connection connection, Core.BrowserType owner) : base(guid, connection, owner)
         {
         }
 
@@ -19,6 +41,7 @@ namespace Microsoft.Playwright.Transport.Channels
             IEnumerable<string> passedArguments = default,
             Proxy proxy = default,
             string downloadsPath = default,
+            string tracesDir = default,
             bool? chromiumSandbox = default,
             IEnumerable<KeyValuePair<string, object>> firefoxUserPrefs = default,
             bool? handleSIGINT = default,
@@ -45,6 +68,7 @@ namespace Microsoft.Playwright.Transport.Channels
             args.Add("env", env.Remap());
             args.Add("proxy", proxy);
             args.Add("downloadsPath", downloadsPath);
+            args.Add("tracesDir", tracesDir);
             args.Add("firefoxUserPrefs", firefoxUserPrefs);
             args.Add("chromiumSandbox", chromiumSandbox);
             args.Add("slowMo", slowMo);
@@ -64,6 +88,7 @@ namespace Microsoft.Playwright.Transport.Channels
             IEnumerable<string> args = default,
             Proxy proxy = default,
             string downloadsPath = default,
+            string tracesDir = default,
             bool? chromiumSandbox = default,
             bool? handleSIGINT = default,
             bool? handleSIGTERM = default,
@@ -90,10 +115,10 @@ namespace Microsoft.Playwright.Transport.Channels
             bool? offline = default,
             HttpCredentials httpCredentials = default,
             ColorScheme? colorScheme = default,
+            ReducedMotion? reducedMotion = default,
             string recordHarPath = default,
             bool? recordHarOmitContent = default,
-            string recordVideoDir = default,
-            RecordVideoSize recordVideoSize = default,
+            Dictionary<string, object> recordVideo = default,
             IEnumerable<string> ignoreDefaultArgs = default,
             bool? ignoreAllDefaultArgs = default)
         {
@@ -105,6 +130,7 @@ namespace Microsoft.Playwright.Transport.Channels
             channelArgs.Add("executablePath", executablePath);
             channelArgs.Add("args", args);
             channelArgs.Add("downloadsPath", downloadsPath);
+            channelArgs.Add("tracesDir", tracesDir);
             channelArgs.Add("proxy", proxy);
             channelArgs.Add("chromiumSandbox", chromiumSandbox);
             channelArgs.Add("handleSIGINT", handleSIGINT);
@@ -141,6 +167,8 @@ namespace Microsoft.Playwright.Transport.Channels
             channelArgs.Add("offline", offline);
             channelArgs.Add("httpCredentials", httpCredentials);
             channelArgs.Add("colorScheme", colorScheme);
+            channelArgs.Add("reducedMotion", reducedMotion);
+
             if (!string.IsNullOrEmpty(recordHarPath))
             {
                 channelArgs.Add("recordHar", new
@@ -150,13 +178,9 @@ namespace Microsoft.Playwright.Transport.Channels
                 });
             }
 
-            if (!string.IsNullOrEmpty(recordVideoDir))
+            if (recordVideo != null)
             {
-                channelArgs.Add("recordVideo", new Dictionary<string, object>()
-                {
-                    { "dir", recordVideoDir },
-                    { "size", recordVideoSize },
-                });
+                channelArgs.Add("recordVideo", recordVideo);
             }
 
             channelArgs.Add("ignoreDefaultArgs", ignoreDefaultArgs);

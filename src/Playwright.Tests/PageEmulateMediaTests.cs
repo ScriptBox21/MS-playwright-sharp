@@ -1,64 +1,80 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.Attributes;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class PageEmulateMediaTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class PageEmulateMediaTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public PageEmulateMediaTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("page-emulate-media.spec.ts", "should emulate scheme work")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldEmulateSchemeWork()
         {
-            await Page.EmulateMediaAsync(new PageEmulateMediaOptions { ColorScheme = ColorScheme.Light });
+            await Page.EmulateMediaAsync(new() { ColorScheme = ColorScheme.Light });
             Assert.True(await Page.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: light)').matches"));
             Assert.False(await Page.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: dark)').matches"));
 
-            await Page.EmulateMediaAsync(new PageEmulateMediaOptions { ColorScheme = ColorScheme.Dark });
+            await Page.EmulateMediaAsync(new() { ColorScheme = ColorScheme.Dark });
             Assert.True(await Page.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: dark)').matches"));
             Assert.False(await Page.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: light)').matches"));
         }
 
         [PlaywrightTest("page-emulate-media.spec.ts", "should default to light")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldDefaultToLight()
         {
             Assert.True(await Page.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: light)').matches"));
             Assert.False(await Page.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: dark)').matches"));
 
-            await Page.EmulateMediaAsync(new PageEmulateMediaOptions { ColorScheme = ColorScheme.Dark });
+            await Page.EmulateMediaAsync(new() { ColorScheme = ColorScheme.Dark });
             Assert.True(await Page.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: dark)').matches"));
             Assert.False(await Page.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: light)').matches"));
 
-            await Page.EmulateMediaAsync(new PageEmulateMediaOptions { ColorScheme = ColorScheme.Null });
+            await Page.EmulateMediaAsync(new() { ColorScheme = ColorScheme.Null });
             Assert.True(await Page.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: light)').matches"));
             Assert.False(await Page.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: dark)').matches"));
         }
 
         [PlaywrightTest("page-emulate-media.spec.ts", "should throw in case of bad media argument")]
-        [Fact(Skip = "We don't need this test. Leaving for tracking purposes")]
+        [Test, Ignore("We don't need this test. Leaving for tracking purposes")]
         public void ShouldThrowInCaseOfBadMediaArgument() { }
 
         [PlaywrightTest("page-emulate-media.spec.ts", "should work during navigation")]
-        [SkipBrowserAndPlatformFact(skipFirefox: true)]
+        [Test, SkipBrowserAndPlatform(skipFirefox: true)]
         public async Task ShouldWorkDuringNavigation()
         {
-            await Page.EmulateMediaAsync(new PageEmulateMediaOptions { ColorScheme = ColorScheme.Light });
-            var navigated = Page.GotoAsync(TestConstants.EmptyPage);
+            await Page.EmulateMediaAsync(new() { ColorScheme = ColorScheme.Light });
+            var navigated = Page.GotoAsync(Server.EmptyPage);
 
             for (int i = 0; i < 9; i++)
             {
-                await Page.EmulateMediaAsync(new PageEmulateMediaOptions { ColorScheme = i % 2 == 0 ? ColorScheme.Dark : ColorScheme.Light });
+                await Page.EmulateMediaAsync(new() { ColorScheme = i % 2 == 0 ? ColorScheme.Dark : ColorScheme.Light });
                 await Task.Delay(1);
             }
             await navigated;
@@ -67,21 +83,21 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-emulate-media.spec.ts", "should work in popup")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkInPopup()
         {
-            await using (var context = await Browser.NewContextAsync(new BrowserNewContextOptions
+            await using (var context = await Browser.NewContextAsync(new()
             {
                 ColorScheme = ColorScheme.Dark,
             }))
             {
                 var page = await context.NewPageAsync();
-                await page.GotoAsync(TestConstants.EmptyPage);
-                var popupTask = page.WaitForEventAsync(PageEvent.Popup);
+                await page.GotoAsync(Server.EmptyPage);
+                var popupTask = page.WaitForPopupAsync();
 
                 await TaskUtils.WhenAll(
                     popupTask,
-                    page.EvaluateAsync("url => window.open(url)", TestConstants.EmptyPage));
+                    page.EvaluateAsync("url => window.open(url)", Server.EmptyPage));
 
                 var popup = popupTask.Result;
 
@@ -89,18 +105,18 @@ namespace Microsoft.Playwright.Tests
                 Assert.False(await popup.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: light)').matches"));
             }
 
-            await using (var context = await Browser.NewContextAsync(new BrowserNewContextOptions
+            await using (var context = await Browser.NewContextAsync(new()
             {
                 ColorScheme = ColorScheme.Light,
             }))
             {
                 var page = await context.NewPageAsync();
-                await page.GotoAsync(TestConstants.EmptyPage);
-                var popupTask = page.WaitForEventAsync(PageEvent.Popup);
+                await page.GotoAsync(Server.EmptyPage);
+                var popupTask = page.WaitForPopupAsync();
 
                 await TaskUtils.WhenAll(
                     popupTask,
-                    page.EvaluateAsync("url => window.open(url)", TestConstants.EmptyPage));
+                    page.EvaluateAsync("url => window.open(url)", Server.EmptyPage));
 
                 var popup = popupTask.Result;
 
@@ -110,41 +126,55 @@ namespace Microsoft.Playwright.Tests
         }
 
         [PlaywrightTest("page-emulate-media.spec.ts", "should work in cross-process iframe")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldWorkInCrossProcessIframe()
         {
-            await using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
+            await using var context = await Browser.NewContextAsync(new()
             {
                 ColorScheme = ColorScheme.Dark,
             });
 
             var page = await context.NewPageAsync();
-            await page.GotoAsync(TestConstants.EmptyPage);
-            await FrameUtils.AttachFrameAsync(page, "frame1", TestConstants.CrossProcessHttpPrefix + "/empty.html");
+            await page.GotoAsync(Server.EmptyPage);
+            await FrameUtils.AttachFrameAsync(page, "frame1", Server.CrossProcessPrefix + "/empty.html");
             var frame = page.Frames.ElementAt(1);
 
             Assert.True(await frame.EvaluateAsync<bool>("() => matchMedia('(prefers-color-scheme: dark)').matches"));
         }
 
         [PlaywrightTest("page-emulate-media.spec.ts", "should emulate type")]
-        [Fact(Timeout = TestConstants.DefaultTestTimeout)]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
         public async Task ShouldEmulateType()
         {
             Assert.True(await Page.EvaluateAsync<bool>("matchMedia('screen').matches"));
             Assert.False(await Page.EvaluateAsync<bool>("matchMedia('print').matches"));
-            await Page.EmulateMediaAsync(new PageEmulateMediaOptions { Media = Media.Print });
+            await Page.EmulateMediaAsync(new() { Media = Media.Print });
             Assert.False(await Page.EvaluateAsync<bool>("matchMedia('screen').matches"));
             Assert.True(await Page.EvaluateAsync<bool>("matchMedia('print').matches"));
             await Page.EmulateMediaAsync();
             Assert.False(await Page.EvaluateAsync<bool>("matchMedia('screen').matches"));
             Assert.True(await Page.EvaluateAsync<bool>("matchMedia('print').matches"));
-            await Page.EmulateMediaAsync(new PageEmulateMediaOptions { Media = Media.Null });
+            await Page.EmulateMediaAsync(new() { Media = Media.Null });
             Assert.True(await Page.EvaluateAsync<bool>("matchMedia('screen').matches"));
             Assert.False(await Page.EvaluateAsync<bool>("matchMedia('print').matches"));
         }
 
         [PlaywrightTest("page-emulate-media.spec.ts", "should throw in case of bad colorScheme argument")]
-        [Fact(Skip = "We don't need this test. Leaving for tracking purposes")]
+        [Test, Ignore("We don't need this test. Leaving for tracking purposes")]
         public void ShouldThrowInCaseOfBadColorSchemeArgument() { }
+
+        [PlaywrightTest("page-emulate-media.spec.ts", "should emulate reduced motion")]
+        [Test, Timeout(TestConstants.DefaultTestTimeout)]
+        public async Task ShouldEmulateReducedMotion()
+        {
+            Assert.True(await Page.EvaluateAsync<bool>("matchMedia('(prefers-reduced-motion: no-preference)').matches"));
+            await Page.EmulateMediaAsync(new() { ReducedMotion = ReducedMotion.Reduce });
+            Assert.True(await Page.EvaluateAsync<bool>("matchMedia('(prefers-reduced-motion: reduce)').matches"));
+            Assert.False(await Page.EvaluateAsync<bool>("matchMedia('(prefers-reduced-motion: no-preference)').matches"));
+            await Page.EmulateMediaAsync(new() { ReducedMotion = ReducedMotion.NoPreference });
+            Assert.False(await Page.EvaluateAsync<bool>("matchMedia('(prefers-reduced-motion: reduce)').matches"));
+            Assert.True(await Page.EvaluateAsync<bool>("matchMedia('(prefers-reduced-motion: no-preference)').matches"));
+            await Page.EmulateMediaAsync(new() { ReducedMotion = ReducedMotion.Null });
+        }
     }
 }

@@ -1,26 +1,40 @@
-using System;
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Playwright.Helpers;
-using Microsoft.Playwright.Testing.Xunit;
-using Microsoft.Playwright.Tests.BaseTests;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace Microsoft.Playwright.Tests
 {
     ///<playwright-file>web-socket.spec.ts</playwright-file>
-    [Collection(TestConstants.TestFixtureBrowserCollectionName)]
-    public class WebSocketTests : PlaywrightSharpPageBaseTest
+    [Parallelizable(ParallelScope.Self)]
+    public class WebSocketTests : PageTestEx
     {
-        /// <inheritdoc/>
-        public WebSocketTests(ITestOutputHelper output) : base(output)
-        {
-        }
-
         [PlaywrightTest("web-socket.spec.ts", "should work")]
-        [Fact]
+        [Test]
         public async Task ShouldWork()
         {
             string value = await Page.EvaluateAsync<string>(@"port => {
@@ -29,12 +43,12 @@ namespace Microsoft.Playwright.Tests
                 const ws = new WebSocket('ws://localhost:' + port + '/ws');
                 ws.addEventListener('message', data => { ws.close(); cb(data.data); });
                 return result;
-            }", TestConstants.Port);
-            Assert.Equal("incoming", value);
+            }", Server.Port);
+            Assert.AreEqual("incoming", value);
         }
 
         [PlaywrightTest("web-socket.spec.ts", "should emit close events")]
-        [Fact]
+        [Test]
         public async Task ShouldEmitCloseEvents()
         {
             var socketClosedTcs = new TaskCompletionSource<bool>();
@@ -55,15 +69,15 @@ namespace Microsoft.Playwright.Tests
             await Page.EvaluateAsync(@"port => {
                 const ws = new WebSocket('ws://localhost:' + port + '/ws');
                 ws.addEventListener('open', () => ws.close());
-            }", TestConstants.Port);
+            }", Server.Port);
 
-            await socketClosedTcs.Task.WithTimeout(TestConstants.DefaultTaskTimeout);
-            Assert.Equal($"open<ws://localhost:{TestConstants.Port}/ws>:close", string.Join(":", log));
+            await socketClosedTcs.Task;
+            Assert.AreEqual($"open<ws://localhost:{Server.Port}/ws>:close", string.Join(":", log));
             Assert.True(webSocket.IsClosed);
         }
 
         [PlaywrightTest("web-socket.spec.ts", "should emit frame events")]
-        [Fact]
+        [Test]
         public async Task ShouldEmitFrameEvents()
         {
             var socketClosedTcs = new TaskCompletionSource<bool>();
@@ -87,17 +101,17 @@ namespace Microsoft.Playwright.Tests
                 const ws = new WebSocket('ws://127.0.0.1:' + port + '/ws');
                 ws.addEventListener('open', () => { ws.send('outgoing'); });
                 ws.addEventListener('message', e => { ws.close() });
-            }", TestConstants.Port);
+            }", Server.Port);
 
-            await socketClosedTcs.Task.WithTimeout(TestConstants.DefaultTaskTimeout);
-            Assert.Equal("open", log[0]);
-            Assert.Equal("close", log[3]);
+            await socketClosedTcs.Task;
+            Assert.AreEqual("open", log[0]);
+            Assert.AreEqual("close", log[3]);
             log.Sort();
-            Assert.Equal("close:open:received<incoming>:sent<outgoing>", string.Join(":", log));
+            Assert.AreEqual("close:open:received<incoming>:sent<outgoing>", string.Join(":", log));
         }
 
         [PlaywrightTest("web-socket.spec.ts", "should emit binary frame events")]
-        [Fact]
+        [Test]
         public async Task ShouldEmitBinaryFrameEvents()
         {
             var socketClosedTcs = new TaskCompletionSource<bool>();
@@ -119,24 +133,23 @@ namespace Microsoft.Playwright.Tests
                     ws.send(binary);
                     ws.close();
                 });
-            }", TestConstants.Port);
+            }", Server.Port);
 
 
-            await socketClosedTcs.Task.WithTimeout(TestConstants.DefaultTaskTimeout);
-            Assert.Equal("text", log[0].Text);
+            await socketClosedTcs.Task;
+            Assert.AreEqual("text", log[0].Text);
 
             for (int i = 0; i < 5; i++)
             {
-                Assert.Equal(i, log[1].Binary[i]);
+                Assert.AreEqual(i, log[1].Binary[i]);
             }
         }
 
         [PlaywrightTest("web-socket.spec.ts", "should emit error")]
-        [Fact]
+        [Test]
         public async Task ShouldEmitError()
         {
             var socketErrorTcs = new TaskCompletionSource<string>();
-            var log = new List<IWebSocketFrame>();
 
             Page.WebSocket += (_, e) =>
             {
@@ -145,23 +158,23 @@ namespace Microsoft.Playwright.Tests
 
             await Page.EvaluateAsync(@"port => {
                 new WebSocket('ws://localhost:' + port + '/bogus-ws');
-            }", TestConstants.Port);
+            }", Server.Port);
 
 
-            await socketErrorTcs.Task.WithTimeout(TestConstants.DefaultTaskTimeout);
+            await socketErrorTcs.Task;
 
             if (TestConstants.IsFirefox)
             {
-                Assert.Equal("CLOSE_ABNORMAL", socketErrorTcs.Task.Result);
+                Assert.AreEqual("CLOSE_ABNORMAL", socketErrorTcs.Task.Result);
             }
             else
             {
-                Assert.Contains(": 40", socketErrorTcs.Task.Result);
+                StringAssert.Contains(": 40", socketErrorTcs.Task.Result);
             }
         }
 
         [PlaywrightTest("web-socket.spec.ts", "should not have stray error events")]
-        [Fact]
+        [Test]
         public async Task ShouldNotHaveStrayErrorEvents()
         {
             var frameReceivedTcs = new TaskCompletionSource<bool>();
@@ -179,7 +192,7 @@ namespace Microsoft.Playwright.Tests
                 frameReceivedTcs.Task,
                 Page.EvaluateAsync(@"port => {
                     window.ws = new WebSocket('ws://localhost:' + port + '/ws');
-                }", TestConstants.Port));
+                }", Server.Port));
 
             await Page.EvaluateAsync("window.ws.close();");
             Assert.Null(socketError);

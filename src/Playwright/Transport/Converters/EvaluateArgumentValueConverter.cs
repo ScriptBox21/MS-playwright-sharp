@@ -1,3 +1,27 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,6 +30,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Playwright.Core;
 using Microsoft.Playwright.Helpers;
 using Microsoft.Playwright.Transport.Channels;
 
@@ -13,13 +38,9 @@ namespace Microsoft.Playwright.Transport.Converters
 {
     internal class EvaluateArgumentValueConverter<T> : JsonConverter<T>
     {
-        private readonly List<object> _visited = new List<object>();
+        private readonly List<object> _visited = new();
 
-        public EvaluateArgumentValueConverter()
-        {
-        }
-
-        public List<EvaluateArgumentGuidElement> Handles { get; } = new List<EvaluateArgumentGuidElement>();
+        public List<EvaluateArgumentGuidElement> Handles { get; } = new();
 
         public override bool CanConvert(Type type) => true;
 
@@ -77,6 +98,11 @@ namespace Microsoft.Playwright.Transport.Converters
                 return new { s = value };
             }
 
+            if (value.GetType().IsEnum)
+            {
+                return new { n = (int)value };
+            }
+
             if (
                 value.GetType() == typeof(int) ||
                 value.GetType() == typeof(decimal) ||
@@ -130,7 +156,7 @@ namespace Microsoft.Playwright.Transport.Converters
 
             if (value is IChannelOwner channelOwner)
             {
-                Handles.Add(new EvaluateArgumentGuidElement { Guid = channelOwner.Channel.Guid });
+                Handles.Add(new() { Guid = channelOwner.Channel.Guid });
                 return new { h = Handles.Count - 1 };
             }
 
@@ -183,9 +209,9 @@ namespace Microsoft.Playwright.Transport.Converters
                 return stringValue.ToObject(t);
             }
 
-            if (result.ValueKind == JsonValueKind.Object && result.TryGetProperty("n", out var numbericValue))
+            if (result.ValueKind == JsonValueKind.Object && result.TryGetProperty("n", out var numericValue))
             {
-                return numbericValue.ToObject(t);
+                return numericValue.ToObject(t);
             }
 
             if (result.ValueKind == JsonValueKind.Object && result.TryGetProperty("o", out var obj))
@@ -302,28 +328,27 @@ namespace Microsoft.Playwright.Transport.Converters
         {
             if (element.ValueKind == JsonValueKind.Object)
             {
-                if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty("d", out var _))
+                if (element.TryGetProperty("d", out _))
                 {
                     return typeof(DateTime);
                 }
 
-                if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty("b", out var _))
+                if (element.TryGetProperty("b", out _))
                 {
                     return typeof(bool);
                 }
 
-                if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty("s", out var _))
+                if (element.TryGetProperty("s", out _))
                 {
                     return typeof(string);
                 }
 
-                if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty("n", out var _))
+                if (element.TryGetProperty("n", out _))
                 {
                     return typeof(decimal);
                 }
 
                 if (
-                    element.ValueKind == JsonValueKind.Object &&
                     element.TryGetProperty("v", out var number) &&
                     (number.ToString() == "Infinity" || number.ToString() == "-Infinity" || number.ToString() == "-0" || number.ToString() == "NaN"))
                 {
